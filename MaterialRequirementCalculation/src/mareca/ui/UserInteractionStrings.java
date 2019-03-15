@@ -15,13 +15,39 @@ public enum UserInteractionStrings {
     OK_STRING("OK"),
 
     /**
-     * string that is the separator between x and y of a coordinate
+     * 
      */
-    REGEX_COORDINATE_INNER_SEPERATOR(";"),
+    REGEX_NAME_OF_ASSEMBLY_MEMBER("[a-zA-Z]+"),
+
     /**
-     * string that is the separator between two pairs of coordinates
+     * 
      */
-    REGEX_COORDINATE_OUTER_SEPERATOR(":"),
+    REGEX_DEFINITION_CHARACTER("="),
+
+    /**
+     * string that is the separator between name of assemblymember and quantity
+     */
+    REGEX_COORDINATE_INNER_SEPERATOR(":"),
+    /**
+     * string that is the separator between two assemblymember-quantity pairs
+     */
+    REGEX_COORDINATE_OUTER_SEPERATOR(";"),
+
+    /**
+     * 
+     */
+    REGEX_NUMBER("\\d"),
+
+    /**
+     * 
+     */
+    REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR(REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()
+            + REGEX_COORDINATE_INNER_SEPERATOR.toString() + REGEX_NUMBER.toString()),
+
+    /**
+     * 
+     */
+    REGEX_MULTIPLE_PAIRS(REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR.toString() + "+"),
     /**
      * which character should separate the command and the parameters, default is
      * space

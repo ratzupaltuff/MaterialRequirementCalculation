@@ -1,6 +1,7 @@
 package mareca.ui;
 
 import mareca.UnexpectedInputException;
+import mareca.model.Element;
 import edu.kit.informatik.Terminal;
 
 /**
@@ -16,6 +17,8 @@ public class Main {
      * @param args arguments given to the main method (not used)
      */
     public static void main(String[] args) {
+        Element element = new Element("A");
+        element.getName();
         do {
             // current command entered
             String inputString = Terminal.readLine();

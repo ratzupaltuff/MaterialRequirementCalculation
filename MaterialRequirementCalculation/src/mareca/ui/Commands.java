@@ -7,15 +7,17 @@ import mareca.UnexpectedInputException;
 import edu.kit.informatik.Terminal;
 
 /**
- * @author ratzupaltuff 
+ * @author ratzupaltuff
  */
 public enum Commands {
     /**
      * 
      */
-    ADD_ASSEMBLY("addAssembly ") { // ^state ([0-9]|10);([0-9]|1[0-4])$
+    ADD_ASSEMBLY("addAssembly" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
+            + UserInteractionStrings.REGEX_MULTIPLE_PAIRS.toString()) {
         @Override
         public void execute(String commandString) throws UnexpectedInputException {
+            
         }
     };
 
@@ -31,7 +33,6 @@ public enum Commands {
      * 
      * @param commandString string to parse/with which the right command should be
      *                      determined
-     * @param game          to interact with
      * @return the right command to user for this commandString
      * @throws UnexpectedInputException if the command is not a valid command
      */
@@ -62,8 +63,6 @@ public enum Commands {
      *                                  user
      */
     public abstract void execute(String commandString) throws UnexpectedInputException;
-
-    
 
     /**
      * method used by the main method, to determine whether to quit or not
