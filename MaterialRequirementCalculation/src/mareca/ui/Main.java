@@ -17,7 +17,7 @@ public class Main {
      * @param args arguments given to the main method (not used)
      */
     public static void main(String[] args) {
-        AssemblyCache knownAssemblies = new AssemblyCache("allowed Assemblies");
+        AssemblyCache knownAssemblies = new AssemblyCache();
         do {
             // current command entered
             String inputString = Terminal.readLine();

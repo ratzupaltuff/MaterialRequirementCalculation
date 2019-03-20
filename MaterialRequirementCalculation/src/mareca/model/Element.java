@@ -5,16 +5,28 @@ public class Element extends AssemblyMember {
     /**
      * @param name name of the element
      */
-    public Element(String name) {
+    Element(String name) {
         super(false, name);
     }
+    
+    /**
+     * @param name name of the element to initialize or to copy
+     * @return the element
+     */
+    public static Element getElement(String name) {
+        return (Element) getAssemblyMember(false, name);
+    }
+    
 
     @Override
     public String toString() {
-        return getName();
+        return "COMPONENT";
     }
     
-    private Assembly getAssembly() {
+    /**
+     * @return the corresponding assembly
+     */
+    Assembly toAssembly() {
         return new Assembly(getName());
     }
 }

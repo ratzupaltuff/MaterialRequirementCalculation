@@ -5,24 +5,25 @@ import mareca.UnexpectedInputException;
 public class AssemblyCache extends Assembly {
 
     /**
-     * @param name name of assemblycache object
      */
-    public AssemblyCache(String name) {
-        super(name);
-    }
-    
-    private void deleteAssemblyMember(String nameOfElementToDelete) throws UnexpectedInputException {
-        getSubAssemblyMember(nameOfElementToDelete);
+    public AssemblyCache() {
+        super();
     }
     
     /**
-     * @param nameOfElementToAdd 
-     * @throws UnexpectedInputException 
+     * @param subMember to add
+     * @param quantity  how often the submember occures in this assembly
      */
-    public void addAssemblyMember(String nameOfElementToAdd) throws UnexpectedInputException {
-        //super.addSubMember(subMember, quantity);
+    @Override
+    public void addSubMember(AssemblyMember subMember, int quantity) {
+        
+        
+        if (containsSubMemberRecursively(subMember)) {
+            
+        }
     }
     
-    //private AssemblyMember getAssemblyMemberByInputString()
-
+    
+    
+    
 }

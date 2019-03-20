@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import mareca.UnexpectedInputException;
+import mareca.model.Assembly;
 import mareca.model.AssemblyCache;
 import mareca.model.AssemblyMember;
 import mareca.model.AssemblyMemberCountTupel;
@@ -21,12 +22,58 @@ public enum Commands {
             + UserInteractionStrings.REGEX_MEMBER_DECLARATION.toString()) {
         @Override
         public void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException {
-            String dataString = commandString
-                    .split(UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString())[1];
-            String nameOfAssemblyToAdd = dataString
+            String nameOfAssemblyToAdd = getCommandOptions(commandString)
                     .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[0];
-            AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = getAssemblyMemberArray(dataString
-                    .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[1]);
+            AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = getAssemblyMemberArray(
+                    getCommandOptions(commandString)
+                            .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[1]);
+
+            Assembly assemblyToAdd = Assembly.getAssembly(nameOfAssemblyToAdd, assemblyMemberCountTupelArray);
+            knownAssemblies.addSubMember(assemblyToAdd, 1);
+            Terminal.printLine("OK");
+        }
+    },
+    /**
+     * 
+     *
+     */
+    REMOVE_ASSEMBLY("removeAssembly" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
+            + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
+        @Override
+        public void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException {
+            String name = getCommandOptions(commandString);
+            knownAssemblies.replaceSubAssemblyWithElementRecursively(Assembly.getAssembly(name));
+            Terminal.printLine("OK");
+        }
+    },
+    /**
+     * 
+     */
+    PRINT_ASSEMBLY("printAssembly" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
+            + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
+        @Override
+        public void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException {
+            String output = AssemblyMember.getAssemblyMember(getCommandOptions(commandString)).toString();
+            Terminal.printLine(output);
+        }
+    },
+
+    /**
+     *
+     */
+    GET_ASSEMBLIES("getAssemblies" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
+            + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
+        @Override
+        public void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException {
+            AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(getCommandOptions(commandString));
+            if (assemblyMember.hasSubElements()) {
+                Assembly assembly = (Assembly) assemblyMember;
+                String output = assembly.getAssembliesString();
+                Terminal.printLine(output);
+            } else {
+                throw new UnexpectedInputException(
+                        "there is no Assembly with the name: " + getCommandOptions(commandString));
+            }
         }
     };
 
@@ -85,12 +132,15 @@ public enum Commands {
         return shouldQuit;
     }
 
-    private static AssemblyMemberCountTupel[] getAssemblyMemberArray(String initalizationString) {
+    private static AssemblyMemberCountTupel[] getAssemblyMemberArray(String initalizationString)
+            throws UnexpectedInputException {
 
         String[] assemblyMemberStringArray = initalizationString
                 .split(UserInteractionStrings.REGEX_COORDINATE_OUTER_SEPERATOR.toString());
-        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray 
-        = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
+
+        checkForDoubleNames(assemblyMemberStringArray);
+
+        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
 
         for (int matchNumber = 0; matchNumber < assemblyMemberStringArray.length; matchNumber++) {
             assemblyMemberCountTupelArray[matchNumber] = getAssemblyMemberCountTupel(
@@ -99,11 +149,31 @@ public enum Commands {
         return assemblyMemberCountTupelArray;
     }
 
+    private static void checkForDoubleNames(String[] assemblyMemberStrings) throws UnexpectedInputException {
+        for (int currentStringNr = 0; currentStringNr < assemblyMemberStrings.length; currentStringNr++) {
+            String currentName = assemblyMemberStrings[currentStringNr]
+                    .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[1];
+            for (int numberOfStringBefore = 0; numberOfStringBefore < currentStringNr; numberOfStringBefore++) {
+                String currentNameBefore = assemblyMemberStrings[numberOfStringBefore]
+                        .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[1];
+                if (currentName.equals(currentNameBefore)) {
+                    throw new UnexpectedInputException("You have entered a name at least twice");
+                }
+            }
+        }
+    }
+
     private static AssemblyMemberCountTupel getAssemblyMemberCountTupel(String assemblyMemberString) {
         String[] assemblyMemberProperties = assemblyMemberString
                 .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString());
         int count = Integer.parseInt(assemblyMemberProperties[0]);
         String nameString = assemblyMemberProperties[1];
-        return new AssemblyMemberCountTupel(new Element(nameString), count);
+        return new AssemblyMemberCountTupel(Element.getElement(nameString), count);
+    }
+
+    private static String getCommandOptions(String commandString) {
+        String commandStringData = commandString
+                .split(UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString())[1];
+        return commandStringData;
     }
 }
