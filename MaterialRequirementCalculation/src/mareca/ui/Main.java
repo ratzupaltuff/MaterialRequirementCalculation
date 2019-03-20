@@ -1,7 +1,7 @@
 package mareca.ui;
 
 import mareca.UnexpectedInputException;
-import mareca.model.Element;
+import mareca.model.AssemblyCache;
 import edu.kit.informatik.Terminal;
 
 /**
@@ -17,14 +17,13 @@ public class Main {
      * @param args arguments given to the main method (not used)
      */
     public static void main(String[] args) {
-        Element element = new Element("A");
-        element.getName();
+        AssemblyCache knownAssemblies = new AssemblyCache("allowed Assemblies");
         do {
             // current command entered
             String inputString = Terminal.readLine();
             try {
                 // try to execute the command, if its not possible, an error is thrown
-                Commands.executeRightCommand(inputString).execute(inputString);
+                Commands.executeRightCommand(inputString, knownAssemblies).execute(inputString, knownAssemblies);
             } catch (UnexpectedInputException e) {
                 // print the error
                 Terminal.printError(e.getMessage());

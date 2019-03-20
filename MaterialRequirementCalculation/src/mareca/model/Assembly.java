@@ -19,7 +19,17 @@ public class Assembly extends AssemblyMember {
      */
     public Assembly(String name) {
         super(true, name);
-        // TODO Auto-generated constructor stub
+    }
+    
+    /**
+     * @param name 
+     * @param subAssemblys 
+     */
+    public Assembly(String name, AssemblyMemberCountTupel[] subAssemblys) {
+        super(true, name);
+        for (AssemblyMemberCountTupel assemblyMemberCountTupel : subAssemblys) {
+            addSubMember(assemblyMemberCountTupel.getAssemblyMember(), assemblyMemberCountTupel.getCount());
+        }
     }
 
     @Override
@@ -31,7 +41,7 @@ public class Assembly extends AssemblyMember {
      * @param subMember to add
      * @param quantity  how often the submember occures in this assembly
      */
-    private void addSubMember(AssemblyMember subMember, int quantity) {
+     void addSubMember(AssemblyMember subMember, int quantity) {
         subMembers.put(subMember, quantity);
     }
 
@@ -91,11 +101,14 @@ public class Assembly extends AssemblyMember {
         subMembers.remove(getSubAssemblyMember(assemblyMemberString));
     }
     
+    
+    
     /**
      * @return hashmap of this object
      */
     HashMap<AssemblyMember, Integer> getHashMap() {
         return subMembers;
     }
+   
 
 }

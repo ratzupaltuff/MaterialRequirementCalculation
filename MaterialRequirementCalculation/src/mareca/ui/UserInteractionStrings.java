@@ -41,13 +41,25 @@ public enum UserInteractionStrings {
     /**
      * 
      */
-    REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR(REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()
-            + REGEX_COORDINATE_INNER_SEPERATOR.toString() + REGEX_NUMBER.toString()),
+    REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR(REGEX_NUMBER.toString() + REGEX_COORDINATE_INNER_SEPERATOR.toString()
+            + REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()),
 
     /**
      * 
      */
-    REGEX_MULTIPLE_PAIRS(REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR.toString() + "+"),
+    REGEX_MULTIPLE_PAIRS("(" + REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR.toString() + ")" + "(;"
+            + REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR.toString() + ")*"),
+
+    /**
+     * 
+     */
+    REGEX_INITIALIZATION_CHARACTER("="),
+
+    /**
+     * 
+     */
+    REGEX_MEMBER_DECLARATION(REGEX_NAME_OF_ASSEMBLY_MEMBER.toString() + REGEX_INITIALIZATION_CHARACTER.toString()
+            + REGEX_MULTIPLE_PAIRS.toString()),
     /**
      * which character should separate the command and the parameters, default is
      * space
