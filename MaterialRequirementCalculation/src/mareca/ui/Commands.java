@@ -5,7 +5,6 @@ import java.util.regex.Pattern;
 
 import mareca.UnexpectedInputException;
 import mareca.model.Assembly;
-import mareca.model.AssemblyCache;
 import mareca.model.AssemblyMember;
 import mareca.model.AssemblyMemberCountTupel;
 import mareca.model.Element;
@@ -21,14 +20,14 @@ public enum Commands {
     ADD_ASSEMBLY("addAssembly" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
             + UserInteractionStrings.REGEX_MEMBER_DECLARATION.toString()) {
         @Override
-        public void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException {
+        public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
             String nameOfAssemblyToAdd = getCommandOptions(commandString)
                     .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[0];
             AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = getAssemblyMemberArray(
                     getCommandOptions(commandString)
                             .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[1]);
 
-            Assembly assemblyToAdd = Assembly.getAssembly(nameOfAssemblyToAdd, assemblyMemberCountTupelArray);
+            Assembly assemblyToAdd = Assembly.createNewAssembly(nameOfAssemblyToAdd, assemblyMemberCountTupelArray);
             knownAssemblies.addSubMember(assemblyToAdd, 1);
             Terminal.printLine("OK");
         }
@@ -40,7 +39,7 @@ public enum Commands {
     REMOVE_ASSEMBLY("removeAssembly" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
             + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
         @Override
-        public void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException {
+        public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
             String name = getCommandOptions(commandString);
             knownAssemblies.replaceSubAssemblyWithElementRecursively(Assembly.getAssembly(name));
             Terminal.printLine("OK");
@@ -52,8 +51,15 @@ public enum Commands {
     PRINT_ASSEMBLY("printAssembly" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
             + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
         @Override
-        public void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException {
-            String output = AssemblyMember.getAssemblyMember(getCommandOptions(commandString)).toString();
+        public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
+            AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(getCommandOptions(commandString));
+            String output = "";
+            if (assemblyMember.hasSubElements()) {
+                Assembly assembly = (Assembly) assemblyMember;
+                output = assembly.getAssembliesString();
+            } else {
+                throw new UnexpectedInputException(assemblyMember.getName() + "is not an Assembly");
+            }
             Terminal.printLine(output);
         }
     },
@@ -64,7 +70,7 @@ public enum Commands {
     GET_ASSEMBLIES("getAssemblies" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
             + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
         @Override
-        public void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException {
+        public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
             AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(getCommandOptions(commandString));
             if (assemblyMember.hasSubElements()) {
                 Assembly assembly = (Assembly) assemblyMember;
@@ -93,7 +99,7 @@ public enum Commands {
      * @return the right command to user for this commandString
      * @throws UnexpectedInputException if the command is not a valid command
      */
-    public static Commands executeRightCommand(String commandString, AssemblyCache knownAssemblies)
+    public static Commands executeRightCommand(String commandString, Assembly knownAssemblies)
             throws UnexpectedInputException {
         for (Commands commandToCheck : Commands.values()) {
             // I decided not only to check if the first word is right and to check
@@ -121,7 +127,7 @@ public enum Commands {
      * @throws UnexpectedInputException when there is an unexpected input from the
      *                                  user
      */
-    public abstract void execute(String commandString, AssemblyCache knownAssemblies) throws UnexpectedInputException;
+    public abstract void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException;
 
     /**
      * method used by the main method, to determine whether to quit or not
@@ -140,7 +146,8 @@ public enum Commands {
 
         checkForDoubleNames(assemblyMemberStringArray);
 
-        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
+        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray 
+        = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
 
         for (int matchNumber = 0; matchNumber < assemblyMemberStringArray.length; matchNumber++) {
             assemblyMemberCountTupelArray[matchNumber] = getAssemblyMemberCountTupel(

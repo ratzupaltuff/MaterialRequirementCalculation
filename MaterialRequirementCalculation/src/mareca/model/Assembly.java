@@ -17,30 +17,38 @@ public class Assembly extends AssemblyMember {
     /**
      * hashmap for saving submembers and their quantity
      */
-    HashMap<AssemblyMember, Integer> subMembers;
+    HashMap<String, Integer> subMembers;
 
     /**
      * @param name name of assembly
      */
     Assembly(String name) {
         super(true, name);
-        subMembers = new HashMap<AssemblyMember, Integer>();
+        subMembers = new HashMap<String, Integer>();
     }
 
     /**
      * special method for assemblies without a name
      */
-    Assembly() {
+    public Assembly() {
         super(true);
-        subMembers = new HashMap<AssemblyMember, Integer>();
+        subMembers = new HashMap<String, Integer>();
     }
 
     /**
      * @param name          of the assembly to add
      * @param subAssemblies of the assembly to add
      * @return newly created assembly
+     * @throws UnexpectedInputException if there is an assembly in the list of child
      */
-    public static Assembly getAssembly(String name, AssemblyMemberCountTupel[] subAssemblies) {
+    public static Assembly createNewAssembly(String name, AssemblyMemberCountTupel[] subAssemblies)
+            throws UnexpectedInputException {
+        if (AssemblyMember.isAssemblyMemberInKnownList(name)) {
+            AssemblyMember assemblyMemberToOverrideAssemblyMember = AssemblyMember.getAssemblyMemberFromKnownList(name);
+            if (assemblyMemberToOverrideAssemblyMember.hasSubElements()) {
+                throw new UnexpectedInputException("there is already an assembly with the name " + name);
+            }
+        }
         AssemblyMember assemblyMemberToAdd = getAssemblyMember(true, name);
         Assembly assemblyToAdd;
         if (assemblyMemberToAdd.hasSubElements()) {
@@ -68,12 +76,12 @@ public class Assembly extends AssemblyMember {
     public String toString() {
         List<String> strings = new ArrayList<String>();
 
-        Set<Map.Entry<AssemblyMember, Integer>> set = subMembers.entrySet();
-        Iterator<Entry<AssemblyMember, Integer>> i = set.iterator();
+        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+        Iterator<Entry<String, Integer>> i = set.iterator();
 
         while (i.hasNext()) {
-            Map.Entry<AssemblyMember, Integer> subMemberEntry = i.next();
-            strings.add(subMemberEntry.getKey().getName() + ":" + subMemberEntry.getValue().toString());
+            Map.Entry<String, Integer> subMemberEntry = i.next();
+            strings.add(subMemberEntry.getKey() + ":" + subMemberEntry.getValue().toString());
         }
 
         Collections.sort(strings);
@@ -85,25 +93,65 @@ public class Assembly extends AssemblyMember {
         return output.toString().substring(0, output.toString().length() - 1); // output and delete last semicolon
     }
 
-    private List<AssemblyMemberCountTupel> subMembersToTupelList() {
+    private List<AssemblyMemberCountTupel> subMembersToTupelList() throws UnexpectedInputException {
         List<AssemblyMemberCountTupel> assemblyMemberCountTupelList = new ArrayList<AssemblyMemberCountTupel>();
 
-        Set<Map.Entry<AssemblyMember, Integer>> set = subMembers.entrySet();
-        Iterator<Entry<AssemblyMember, Integer>> i = set.iterator();
+        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+        Iterator<Entry<String, Integer>> i = set.iterator();
 
         while (i.hasNext()) {
-            Map.Entry<AssemblyMember, Integer> subMemberEntry = i.next();
-            AssemblyMemberCountTupel tupelToAdd = new AssemblyMemberCountTupel(subMemberEntry.getKey(),
-                    subMemberEntry.getValue());
-            assemblyMemberCountTupelList.add(tupelToAdd);
+            Map.Entry<String, Integer> subMemberEntry = i.next();
+            AssemblyMemberCountTupel tupelToAdd = new AssemblyMemberCountTupel(
+                    getAssemblyMember(subMemberEntry.getKey()), subMemberEntry.getValue());
+            addSubMembersToTupelList(assemblyMemberCountTupelList, tupelToAdd);
         }
         return assemblyMemberCountTupelList;
     }
 
     /**
-     * @return a String representation of all Assemblies in this Assembly
+     * @param subMemberTupelList list to add the elements to
+     * @return the list with added contents
+     * @throws UnexpectedInputException 
      */
-    public String getAssembliesString() {
+    List<AssemblyMemberCountTupel> subMembersToTupelListRecursively(List<AssemblyMemberCountTupel> subMemberTupelList)
+            throws UnexpectedInputException {
+
+        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+        Iterator<Entry<String, Integer>> i = set.iterator();
+
+        while (i.hasNext()) {
+            Map.Entry<String, Integer> subMemberEntry = i.next();
+            AssemblyMember subAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
+            AssemblyMemberCountTupel tupelToAdd = new AssemblyMemberCountTupel(subAssemblyMember,
+                    subMemberEntry.getValue());
+            addSubMembersToTupelList(subMemberTupelList, tupelToAdd);
+            if (subAssemblyMember.hasSubElements()) {
+                Assembly subAssembly = (Assembly) subAssemblyMember;
+                subAssembly.subMembersToTupelListRecursively(subMemberTupelList);
+            }
+        }
+        return subMemberTupelList;
+    }
+
+    private List<AssemblyMemberCountTupel> addSubMembersToTupelList(List<AssemblyMemberCountTupel> listToAddElement,
+            AssemblyMemberCountTupel tupelToAdd) {
+        // Iterator<AssemblyMemberCountTupel> iterator = new
+        // Iterator<AssemblyMemberCountTupel>();
+        for (AssemblyMemberCountTupel assemblyMemberCountTupel : listToAddElement) {
+            if (assemblyMemberCountTupel.getAssemblyMember().equals(tupelToAdd.getAssemblyMember())) {
+                assemblyMemberCountTupel.changeCount(tupelToAdd.getCount());
+                return listToAddElement;
+            }
+        }
+        listToAddElement.add(tupelToAdd);
+        return listToAddElement;
+    }
+
+    /**
+     * @return a String representation of all Assemblies in this Assembly
+     * @throws UnexpectedInputException
+     */
+    public String getAssembliesString() throws UnexpectedInputException {
 
         Comparator<AssemblyMemberCountTupel> assemblyComparator = new Comparator<AssemblyMemberCountTupel>() {
             /**
@@ -121,12 +169,16 @@ public class Assembly extends AssemblyMember {
                 }
             }
         };
-        List<AssemblyMemberCountTupel> subMemberTupelList = subMembersToTupelList();
+        List<AssemblyMemberCountTupel> subMemberTupelList = new ArrayList<AssemblyMemberCountTupel>();
+        subMembersToTupelListRecursively(subMemberTupelList);
+
         Collections.sort(subMemberTupelList, assemblyComparator);
 
         StringBuilder output = new StringBuilder(30);
         for (AssemblyMemberCountTupel subMemberTupel : subMemberTupelList) {
-            output.append(subMemberTupel.getAssemblyMember().getName() + ":" + subMemberTupel.getCount() + ";");
+            if (subMemberTupel.getAssemblyMember().hasSubElements()) {
+                output.append(subMemberTupel.getAssemblyMember().getName() + ":" + subMemberTupel.getCount() + ";");
+            }
         }
         return output.toString().substring(0, output.toString().length() - 1); // output and delete last semicolon
     }
@@ -134,12 +186,12 @@ public class Assembly extends AssemblyMember {
     /**
      * @param subMember to add
      * @param quantity  how often the submember occures in this assembly
+     * @throws UnexpectedInputException if there is already an assembly with this
+     *                                  name
      */
-    public void addSubMember(AssemblyMember subMember, int quantity) {
-        if (containsSubMemberRecursively(subMember)) {
-
-        } else {
-            subMembers.put(subMember, quantity);
+    public void addSubMember(AssemblyMember subMember, int quantity) throws UnexpectedInputException {
+        if (!containsSubMemberRecursively(subMember)) {
+            subMembers.put(subMember.getName(), quantity);
         }
     }
 
@@ -148,14 +200,15 @@ public class Assembly extends AssemblyMember {
      * 
      * @param subMember to check
      * @return true if the assembly contains this member, else false
+     * @throws UnexpectedInputException 
      */
-    boolean containsSubMemberRecursively(AssemblyMember subMember) {
-        Set set = subMembers.entrySet();
-        Iterator i = set.iterator();
+    boolean containsSubMemberRecursively(AssemblyMember subMember) throws UnexpectedInputException {
+        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+        Iterator<Entry<String, Integer>> i = set.iterator();
 
         while (i.hasNext()) {
-            Map.Entry subMemberEntry = (Map.Entry) i.next();
-            AssemblyMember currentAssemblyMember = (AssemblyMember) subMemberEntry.getKey();
+            Map.Entry<String, Integer> subMemberEntry = i.next();
+            AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
             if (currentAssemblyMember.equals(subMember)) {
                 return true;
             } else if (currentAssemblyMember.hasSubElements()) {
@@ -173,14 +226,15 @@ public class Assembly extends AssemblyMember {
      * 
      * @param subMember to check
      * @return true if the assembly contains this member, else false
+     * @throws UnexpectedInputException 
      */
-    boolean containsSubMember(AssemblyMember subMember) {
-        Set set = subMembers.entrySet();
-        Iterator i = set.iterator();
+    boolean containsSubMember(AssemblyMember subMember) throws UnexpectedInputException {
+        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+        Iterator<Entry<String, Integer>> i = set.iterator();
 
         while (i.hasNext()) {
-            Map.Entry subMemberEntry = (Map.Entry) i.next();
-            AssemblyMember currentAssemblyMember = (AssemblyMember) subMemberEntry.getKey();
+            Map.Entry<String, Integer> subMemberEntry = i.next();
+            AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
             if (currentAssemblyMember.equals(subMember)) {
                 return true;
             }
@@ -195,12 +249,12 @@ public class Assembly extends AssemblyMember {
      * @throws UnexpectedInputException if there is no such Element
      */
     AssemblyMember getSubAssemblyMemberRecursively(String name) throws UnexpectedInputException {
-        Set set = subMembers.entrySet();
-        Iterator i = set.iterator();
+        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+        Iterator<Entry<String, Integer>> i = set.iterator();
 
         while (i.hasNext()) {
-            Map.Entry subMemberEntry = (Map.Entry) i.next();
-            AssemblyMember currentAssemblyMember = (AssemblyMember) subMemberEntry.getKey();
+            Map.Entry<String, Integer> subMemberEntry = i.next();
+            AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
             if (currentAssemblyMember.getName().equals(name)) {
                 return currentAssemblyMember;
             }
@@ -214,13 +268,13 @@ public class Assembly extends AssemblyMember {
      * @throws UnexpectedInputException if the name does not correspond with any
      *                                  subassembly
      */
-    int getCountOfSubAssemblyMember(Assembly assembly) {
-        Set set = subMembers.entrySet();
-        Iterator i = set.iterator();
+    int getCountOfSubAssemblyMember(Assembly assembly) throws UnexpectedInputException {
+        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+        Iterator<Entry<String, Integer>> i = set.iterator();
 
         while (i.hasNext()) {
-            Map.Entry subMemberEntry = (Map.Entry) i.next();
-            AssemblyMember currentAssemblyMember = (AssemblyMember) subMemberEntry.getKey();
+            Map.Entry<String, Integer> subMemberEntry = i.next();
+            AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
             if (currentAssemblyMember.equals(assembly)) {
                 return (int) subMemberEntry.getValue();
             }
@@ -239,17 +293,17 @@ public class Assembly extends AssemblyMember {
      * @param elementToRemove to remove
      * @throws UnexpectedInputException if this assembly member is not present
      */
-    void removeElementRecursively(Element elementToRemove) {
+    void removeElementRecursively(Element elementToRemove) throws UnexpectedInputException {
         if (containsSubMember(elementToRemove)) {
-            subMembers.remove(elementToRemove);
+            subMembers.remove(elementToRemove.getName());
         }
         if (containsSubMemberRecursively(elementToRemove)) {
-            Set<Map.Entry<AssemblyMember, Integer>> set = subMembers.entrySet();
-            Iterator<Entry<AssemblyMember, Integer>> i = set.iterator();
+            Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+            Iterator<Entry<String, Integer>> i = set.iterator();
 
             while (i.hasNext()) {
-                Map.Entry<AssemblyMember, Integer> subMemberEntry = i.next();
-                AssemblyMember currentAssemblyMember = subMemberEntry.getKey();
+                Map.Entry<String, Integer> subMemberEntry = i.next();
+                AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
                 if (currentAssemblyMember.hasSubElements()) {
                     Assembly assembly = (Assembly) currentAssemblyMember;
                     if (assembly.containsSubMember(elementToRemove)) {
@@ -278,12 +332,12 @@ public class Assembly extends AssemblyMember {
      * @throws UnexpectedInputException if this assembly member doesnt exist
      */
     public void replaceSubAssemblyWithElementRecursively(Assembly assemblyToReplace) throws UnexpectedInputException {
-        Set<Map.Entry<AssemblyMember, Integer>> set = subMembers.entrySet();
-        Iterator<Entry<AssemblyMember, Integer>> i = set.iterator();
+        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+        Iterator<Entry<String, Integer>> i = set.iterator();
 
         while (i.hasNext()) {
-            Map.Entry<AssemblyMember, Integer> subMemberEntry = i.next();
-            AssemblyMember currentAssemblyMember = subMemberEntry.getKey();
+            Map.Entry<String, Integer> subMemberEntry = i.next();
+            AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
             if (currentAssemblyMember.hasSubElements()) {
                 Assembly assembly = (Assembly) currentAssemblyMember;
                 if (assembly.equals(assemblyToReplace)) {
@@ -304,14 +358,18 @@ public class Assembly extends AssemblyMember {
      * @throws UnexpectedInputException if this element doesnt exist
      */
     public void replaceSubElementWithAssemblyRecursively(Assembly assembly) throws UnexpectedInputException {
-        Element elementToReplace = Element.getElement(assembly.getName());
+        AssemblyMember assemblyMemberToReplace = Element.getElement(assembly.getName());
+        if (assemblyMemberToReplace.hasSubElements()) {
+            throw new UnexpectedInputException("AsseblyMember " + assembly.getName() + " is already a Assembly");
+        }
+        Element elementToReplace = (Element) assemblyMemberToReplace;
         if (containsSubMemberRecursively(elementToReplace)) {
-            Set<Map.Entry<AssemblyMember, Integer>> set = subMembers.entrySet();
-            Iterator<Entry<AssemblyMember, Integer>> i = set.iterator();
+            Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+            Iterator<Entry<String, Integer>> i = set.iterator();
 
             while (i.hasNext()) {
-                Map.Entry<AssemblyMember, Integer> subMemberEntry = i.next();
-                AssemblyMember currentAssemblyMember = subMemberEntry.getKey();
+                Map.Entry<String, Integer> subMemberEntry = i.next();
+                AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
                 if (currentAssemblyMember.equals(elementToReplace)) {
                     int count = subMemberEntry.getValue();
                     removeAssemblyMember(elementToReplace);
@@ -323,15 +381,7 @@ public class Assembly extends AssemblyMember {
                     }
                 }
             }
-
         }
-    }
-
-    /**
-     * @return hashmap of this object
-     */
-    HashMap<AssemblyMember, Integer> getHashMap() {
-        return subMembers;
     }
 
 }

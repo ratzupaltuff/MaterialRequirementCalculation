@@ -13,8 +13,8 @@ public class Element extends AssemblyMember {
      * @param name name of the element to initialize or to copy
      * @return the element
      */
-    public static Element getElement(String name) {
-        return (Element) getAssemblyMember(false, name);
+    public static AssemblyMember getElement(String name) {
+        return getAssemblyMember(false, name);
     }
     
 
@@ -27,6 +27,7 @@ public class Element extends AssemblyMember {
      * @return the corresponding assembly
      */
     Assembly toAssembly() {
+        AssemblyMember.removeAssemblyMemberFromKnownList(this);
         return new Assembly(getName());
     }
 }

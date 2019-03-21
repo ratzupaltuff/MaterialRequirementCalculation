@@ -71,7 +71,7 @@ public abstract class AssemblyMember {
             AssemblyMember assemblyMember = getAssemblyMemberFromKnownList(name);
             return assemblyMember;
         } else {
-            throw new UnexpectedInputException("you never used this Assembly Element before: " + name);
+            throw new UnexpectedInputException("there is no entry for an Assembly member with the name: " + name);
         }
     }
 
@@ -110,7 +110,7 @@ public abstract class AssemblyMember {
      * @throws UnexpectedInputException if there is no such element
      */
     static AssemblyMember getAssemblyMemberFromKnownList(String name)/* throws UnexpectedInputException */ {
-        Iterator i = alreadyUsedAssemblyMembers.iterator();
+        Iterator<AssemblyMember> i = alreadyUsedAssemblyMembers.iterator();
 
         while (i.hasNext()) {
             AssemblyMember currentAssemblyMember = (AssemblyMember) i.next();
@@ -123,11 +123,11 @@ public abstract class AssemblyMember {
     }
 
     /**
-     * @param name
+     * @param name if the element, to check if its known
      * @return true if there is already an Assembly member with this name
      */
     static boolean isAssemblyMemberInKnownList(String name) {
-        Iterator i = alreadyUsedAssemblyMembers.iterator();
+        Iterator<AssemblyMember> i = alreadyUsedAssemblyMembers.iterator();
 
         while (i.hasNext()) {
             AssemblyMember currentAssemblyMember = (AssemblyMember) i.next();
@@ -148,4 +148,12 @@ public abstract class AssemblyMember {
         }
         return false;
     }
+    
+    /**
+     * @param assemblyMemberToRemove to remove
+     */
+    static void removeAssemblyMemberFromKnownList(AssemblyMember assemblyMemberToRemove) {
+        alreadyUsedAssemblyMembers.remove(assemblyMemberToRemove);
+    }
+    
 }

@@ -1,7 +1,7 @@
 package mareca.ui;
 
 import mareca.UnexpectedInputException;
-import mareca.model.AssemblyCache;
+import mareca.model.Assembly;
 import edu.kit.informatik.Terminal;
 
 /**
@@ -17,7 +17,7 @@ public class Main {
      * @param args arguments given to the main method (not used)
      */
     public static void main(String[] args) {
-        AssemblyCache knownAssemblies = new AssemblyCache();
+        Assembly knownAssemblies = new Assembly();
         do {
             // current command entered
             String inputString = Terminal.readLine();

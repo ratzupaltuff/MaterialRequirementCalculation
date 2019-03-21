@@ -26,5 +26,12 @@ public class AssemblyMemberCountTupel {
     public int getCount() {
         return count;
     }
+    
+    /**
+     * @param changeByValue 
+     */
+    public void changeCount(int changeByValue) {
+        count = count + changeByValue;
+    }
 
 }
