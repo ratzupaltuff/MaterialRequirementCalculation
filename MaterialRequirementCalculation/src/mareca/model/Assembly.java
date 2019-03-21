@@ -38,30 +38,29 @@ public class Assembly extends AssemblyMember {
     /**
      * @param name          of the assembly to add
      * @param subAssemblies of the assembly to add
-     * @return newly created assembly
+     * @param count         of subassembly
      * @throws UnexpectedInputException if there is an assembly in the list of child
      */
-    public static Assembly createNewAssembly(String name, AssemblyMemberCountTupel[] subAssemblies)
+    public void createNewSubAssembly(String name, AssemblyMemberCountTupel[] subAssemblies, int count)
             throws UnexpectedInputException {
-        if (AssemblyMember.isAssemblyMemberInKnownList(name)) {
-            AssemblyMember assemblyMemberToOverrideAssemblyMember = AssemblyMember.getAssemblyMemberFromKnownList(name);
-            if (assemblyMemberToOverrideAssemblyMember.hasSubElements()) {
-                throw new UnexpectedInputException("there is already an assembly with the name " + name);
-            }
-        }
-        AssemblyMember assemblyMemberToAdd = getAssemblyMember(true, name);
         Assembly assemblyToAdd;
-        if (assemblyMemberToAdd.hasSubElements()) {
-            assemblyToAdd = (Assembly) assemblyMemberToAdd;
+        if (AssemblyMember.isAssemblyMemberInKnownList(name)) {
+            AssemblyMember assemblyMemberToOverride = AssemblyMember.getAssemblyMemberFromKnownList(name);
+            if (assemblyMemberToOverride.hasSubElements()) {
+                throw new UnexpectedInputException("there is already an assembly with the name " + name);
+            } else {
+                Element elementToConvert = (Element) assemblyMemberToOverride;
+                assemblyToAdd = elementToConvert.toAssembly();
+            }
         } else {
-            Element elementToConvert = (Element) assemblyMemberToAdd;
-            assemblyToAdd = elementToConvert.toAssembly();
+            assemblyToAdd = (Assembly) getAssemblyMember(true, name);
         }
+
         for (AssemblyMemberCountTupel assemblyMemberCountTupel : subAssemblies) {
-            assemblyToAdd.addSubMember(assemblyMemberCountTupel.getAssemblyMember(),
+            assemblyToAdd.addSubMember(Element.getElement((assemblyMemberCountTupel.getAssemblyMemberString())),
                     assemblyMemberCountTupel.getCount());
         }
-        return assemblyToAdd;
+        addSubMember(assemblyToAdd, count);
     }
 
     /**
@@ -74,26 +73,21 @@ public class Assembly extends AssemblyMember {
 
     @Override
     public String toString() {
-        List<String> strings = new ArrayList<String>();
 
-        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
-        Iterator<Entry<String, Integer>> i = set.iterator();
+        List<AssemblyMemberCountTupel> subMemberTupelList = new ArrayList<AssemblyMemberCountTupel>();
+        subMembersToTupelList();
 
-        while (i.hasNext()) {
-            Map.Entry<String, Integer> subMemberEntry = i.next();
-            strings.add(subMemberEntry.getKey() + ":" + subMemberEntry.getValue().toString());
-        }
-
-        Collections.sort(strings);
+        Collections.sort(subMemberTupelList, getComparator());
 
         StringBuilder output = new StringBuilder(30);
-        for (String s : strings) {
-            output.append(s + ";");
+        for (AssemblyMemberCountTupel subMemberTupel : subMemberTupelList) {
+                output.append(subMemberTupel.getAssemblyMemberString() + ":" + subMemberTupel.getCount() + ";");
         }
+
         return output.toString().substring(0, output.toString().length() - 1); // output and delete last semicolon
     }
 
-    private List<AssemblyMemberCountTupel> subMembersToTupelList() throws UnexpectedInputException {
+    private List<AssemblyMemberCountTupel> subMembersToTupelList() {
         List<AssemblyMemberCountTupel> assemblyMemberCountTupelList = new ArrayList<AssemblyMemberCountTupel>();
 
         Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
@@ -101,8 +95,8 @@ public class Assembly extends AssemblyMember {
 
         while (i.hasNext()) {
             Map.Entry<String, Integer> subMemberEntry = i.next();
-            AssemblyMemberCountTupel tupelToAdd = new AssemblyMemberCountTupel(
-                    getAssemblyMember(subMemberEntry.getKey()), subMemberEntry.getValue());
+            AssemblyMemberCountTupel tupelToAdd = new AssemblyMemberCountTupel(subMemberEntry.getKey(),
+                    subMemberEntry.getValue());
             addSubMembersToTupelList(assemblyMemberCountTupelList, tupelToAdd);
         }
         return assemblyMemberCountTupelList;
@@ -110,11 +104,13 @@ public class Assembly extends AssemblyMember {
 
     /**
      * @param subMemberTupelList list to add the elements to
+     * @param factorOfOccurence  how often the current element occurs in upper
+     *                           assemblies
      * @return the list with added contents
-     * @throws UnexpectedInputException 
+     * @throws UnexpectedInputException if
      */
-    List<AssemblyMemberCountTupel> subMembersToTupelListRecursively(List<AssemblyMemberCountTupel> subMemberTupelList)
-            throws UnexpectedInputException {
+    List<AssemblyMemberCountTupel> subMembersToTupelListRecursively(List<AssemblyMemberCountTupel> subMemberTupelList,
+            int factorOfOccurence) throws UnexpectedInputException {
 
         Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
         Iterator<Entry<String, Integer>> i = set.iterator();
@@ -122,12 +118,13 @@ public class Assembly extends AssemblyMember {
         while (i.hasNext()) {
             Map.Entry<String, Integer> subMemberEntry = i.next();
             AssemblyMember subAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
-            AssemblyMemberCountTupel tupelToAdd = new AssemblyMemberCountTupel(subAssemblyMember,
-                    subMemberEntry.getValue());
+            AssemblyMemberCountTupel tupelToAdd = new AssemblyMemberCountTupel(subAssemblyMember.getName(),
+                    subMemberEntry.getValue() * factorOfOccurence);
             addSubMembersToTupelList(subMemberTupelList, tupelToAdd);
             if (subAssemblyMember.hasSubElements()) {
                 Assembly subAssembly = (Assembly) subAssemblyMember;
-                subAssembly.subMembersToTupelListRecursively(subMemberTupelList);
+                subAssembly.subMembersToTupelListRecursively(subMemberTupelList,
+                        subMemberEntry.getValue() * factorOfOccurence);
             }
         }
         return subMemberTupelList;
@@ -138,7 +135,7 @@ public class Assembly extends AssemblyMember {
         // Iterator<AssemblyMemberCountTupel> iterator = new
         // Iterator<AssemblyMemberCountTupel>();
         for (AssemblyMemberCountTupel assemblyMemberCountTupel : listToAddElement) {
-            if (assemblyMemberCountTupel.getAssemblyMember().equals(tupelToAdd.getAssemblyMember())) {
+            if (assemblyMemberCountTupel.getAssemblyMemberString().equals(tupelToAdd.getAssemblyMemberString())) {
                 assemblyMemberCountTupel.changeCount(tupelToAdd.getCount());
                 return listToAddElement;
             }
@@ -147,12 +144,7 @@ public class Assembly extends AssemblyMember {
         return listToAddElement;
     }
 
-    /**
-     * @return a String representation of all Assemblies in this Assembly
-     * @throws UnexpectedInputException
-     */
-    public String getAssembliesString() throws UnexpectedInputException {
-
+    private Comparator<AssemblyMemberCountTupel> getComparator() {
         Comparator<AssemblyMemberCountTupel> assemblyComparator = new Comparator<AssemblyMemberCountTupel>() {
             /**
              * @param tupel1 tupel one to compare
@@ -165,22 +157,69 @@ public class Assembly extends AssemblyMember {
                 if (tupel1.getCount() != tupel2.getCount()) {
                     return tupel2.getCount() - tupel1.getCount();
                 } else {
-                    return tupel1.getAssemblyMember().getName().compareTo(tupel2.getAssemblyMember().getName());
+                    return tupel1.getAssemblyMemberString().compareTo(tupel2.getAssemblyMemberString());
                 }
             }
         };
+        return assemblyComparator;
+    }
+
+    /**
+     * @return a String representation of all Assemblies in this Assembly
+     * @throws UnexpectedInputException if
+     */
+    public String getAssembliesString() throws UnexpectedInputException {
+
+        Comparator<AssemblyMemberCountTupel> assemblyComparator = getComparator();
+
         List<AssemblyMemberCountTupel> subMemberTupelList = new ArrayList<AssemblyMemberCountTupel>();
-        subMembersToTupelListRecursively(subMemberTupelList);
+        subMembersToTupelListRecursively(subMemberTupelList, 1);
 
         Collections.sort(subMemberTupelList, assemblyComparator);
 
         StringBuilder output = new StringBuilder(30);
         for (AssemblyMemberCountTupel subMemberTupel : subMemberTupelList) {
-            if (subMemberTupel.getAssemblyMember().hasSubElements()) {
-                output.append(subMemberTupel.getAssemblyMember().getName() + ":" + subMemberTupel.getCount() + ";");
+            AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberTupel.getAssemblyMemberString());
+            if (currentAssemblyMember.hasSubElements()) {
+                output.append(currentAssemblyMember.getName() + ":" + subMemberTupel.getCount() + ";");
             }
         }
-        return output.toString().substring(0, output.toString().length() - 1); // output and delete last semicolon
+        String outputString;
+        if (output.toString().length() == 0) {
+            outputString = "EMPTY";
+        } else {
+            outputString = output.toString().substring(0, output.toString().length() - 1); // delete last semicolon
+        }
+        return outputString;
+    }
+
+    /**
+     * @return a String representation of all Assemblies in this Assembly
+     * @throws UnexpectedInputException if
+     */
+    public String getElementsString() throws UnexpectedInputException {
+
+        Comparator<AssemblyMemberCountTupel> assemblyComparator = getComparator();
+
+        List<AssemblyMemberCountTupel> subMemberTupelList = new ArrayList<AssemblyMemberCountTupel>();
+        subMembersToTupelListRecursively(subMemberTupelList, 1);
+
+        Collections.sort(subMemberTupelList, assemblyComparator);
+
+        StringBuilder output = new StringBuilder(30);
+        for (AssemblyMemberCountTupel subMemberTupel : subMemberTupelList) {
+            AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberTupel.getAssemblyMemberString());
+            if (!currentAssemblyMember.hasSubElements()) {
+                output.append(currentAssemblyMember.getName() + ":" + subMemberTupel.getCount() + ";");
+            }
+        }
+        String outputString;
+        if (output.toString().length() == 0) {
+            outputString = "EMPTY";
+        } else {
+            outputString = output.toString().substring(0, output.toString().length() - 1); // delete last semicolon
+        }
+        return outputString;
     }
 
     /**
@@ -200,7 +239,7 @@ public class Assembly extends AssemblyMember {
      * 
      * @param subMember to check
      * @return true if the assembly contains this member, else false
-     * @throws UnexpectedInputException 
+     * @throws UnexpectedInputException
      */
     boolean containsSubMemberRecursively(AssemblyMember subMember) throws UnexpectedInputException {
         Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
@@ -226,7 +265,7 @@ public class Assembly extends AssemblyMember {
      * 
      * @param subMember to check
      * @return true if the assembly contains this member, else false
-     * @throws UnexpectedInputException 
+     * @throws UnexpectedInputException
      */
     boolean containsSubMember(AssemblyMember subMember) throws UnexpectedInputException {
         Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
@@ -293,7 +332,7 @@ public class Assembly extends AssemblyMember {
      * @param elementToRemove to remove
      * @throws UnexpectedInputException if this assembly member is not present
      */
-    void removeElementRecursively(Element elementToRemove) throws UnexpectedInputException {
+    public void removeElementRecursively(Element elementToRemove) throws UnexpectedInputException {
         if (containsSubMember(elementToRemove)) {
             subMembers.remove(elementToRemove.getName());
         }
@@ -319,7 +358,7 @@ public class Assembly extends AssemblyMember {
      * @param assemblyMember to remove
      * @throws UnexpectedInputException if this assembly member is not present
      */
-    void removeAssemblyMember(AssemblyMember assemblyMember) throws UnexpectedInputException {
+    public void removeAssemblyMember(AssemblyMember assemblyMember) throws UnexpectedInputException {
         if (assemblyMember.hasSubElements()) {
             replaceSubAssemblyWithElementRecursively((Assembly) assemblyMember);
         } else {

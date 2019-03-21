@@ -7,7 +7,6 @@ import mareca.UnexpectedInputException;
 import mareca.model.Assembly;
 import mareca.model.AssemblyMember;
 import mareca.model.AssemblyMemberCountTupel;
-import mareca.model.Element;
 import edu.kit.informatik.Terminal;
 
 /**
@@ -27,8 +26,7 @@ public enum Commands {
                     getCommandOptions(commandString)
                             .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[1]);
 
-            Assembly assemblyToAdd = Assembly.createNewAssembly(nameOfAssemblyToAdd, assemblyMemberCountTupelArray);
-            knownAssemblies.addSubMember(assemblyToAdd, 1);
+            knownAssemblies.createNewSubAssembly(nameOfAssemblyToAdd, assemblyMemberCountTupelArray, 1);
             Terminal.printLine("OK");
         }
     },
@@ -80,6 +78,72 @@ public enum Commands {
                 throw new UnexpectedInputException(
                         "there is no Assembly with the name: " + getCommandOptions(commandString));
             }
+        }
+    },
+    /**
+     * 
+     */
+    GET_COMPONENTS("getComponents" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
+            + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
+        @Override
+        public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
+            AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(getCommandOptions(commandString));
+            if (assemblyMember.hasSubElements()) {
+                Assembly assembly = (Assembly) assemblyMember;
+                String output = assembly.getElementsString();
+                Terminal.printLine(output);
+            } else {
+                throw new UnexpectedInputException(
+                        "there is no Assembly with the name: " + getCommandOptions(commandString));
+            }
+        }
+    },
+    /**
+     *
+     */
+    ADD_PART("addPart" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
+            + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
+        @Override
+        public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
+            String[] commandContentStrings = getCommandOptions(commandString).split("\\+");
+            AssemblyMemberCountTupel tupelToAdd = getAssemblyMemberCountTupel(commandContentStrings[1]);
+            AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(false, commandContentStrings[0]);
+            if (assemblyMember.hasSubElements()) {
+                Assembly assembly = (Assembly) assemblyMember;
+                assembly.addSubMember(AssemblyMember.getAssemblyMember(tupelToAdd.getAssemblyMemberString()),
+                        tupelToAdd.getCount());
+                Terminal.printLine("OK");
+            } else {
+                throw new UnexpectedInputException(tupelToAdd.getAssemblyMemberString() + " is not an Assembly");
+            }
+        }
+    },
+    /**
+    *
+    */
+    REMOVE_PART("removePart" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
+            + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
+        @Override
+        public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
+            String[] commandContentStrings = getCommandOptions(commandString).split("-");
+            AssemblyMemberCountTupel tupelToAdd = getAssemblyMemberCountTupel(commandContentStrings[1]);
+            AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(commandContentStrings[0]);
+            if (assemblyMember.hasSubElements()) {
+                Assembly assembly = (Assembly) assemblyMember;
+                assembly.removeAssemblyMember(AssemblyMember.getAssemblyMember(tupelToAdd.getAssemblyMemberString()));
+                Terminal.printLine("OK");
+            } else {
+                throw new UnexpectedInputException(tupelToAdd.getAssemblyMemberString() + " is not an Assembly");
+            }
+        }
+    },
+    /**
+     * command to exit the application
+     */
+    QUIT("quit") {
+        @Override
+        public void execute(String commandString, Assembly knownAssemblies) {
+            shouldQuit = true;
         }
     };
 
@@ -175,7 +239,7 @@ public enum Commands {
                 .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString());
         int count = Integer.parseInt(assemblyMemberProperties[0]);
         String nameString = assemblyMemberProperties[1];
-        return new AssemblyMemberCountTupel(Element.getElement(nameString), count);
+        return new AssemblyMemberCountTupel(nameString, count);
     }
 
     private static String getCommandOptions(String commandString) {

@@ -1,5 +1,7 @@
 package mareca.model;
 
+import mareca.UnexpectedInputException;
+
 public class Element extends AssemblyMember {
 
     /**
@@ -13,7 +15,7 @@ public class Element extends AssemblyMember {
      * @param name name of the element to initialize or to copy
      * @return the element
      */
-    public static AssemblyMember getElement(String name) {
+    static AssemblyMember getElement(String name) {
         return getAssemblyMember(false, name);
     }
     
@@ -25,9 +27,10 @@ public class Element extends AssemblyMember {
     
     /**
      * @return the corresponding assembly
+     * @throws UnexpectedInputException if the current element cannot be removed
      */
-    Assembly toAssembly() {
-        AssemblyMember.removeAssemblyMemberFromKnownList(this);
+    Assembly toAssembly() throws UnexpectedInputException {
+        AssemblyMember.removeAssemblyMemberFromKnownList(getName());
         return new Assembly(getName());
     }
 }

@@ -1,14 +1,14 @@
 package mareca.model;
 
 public class AssemblyMemberCountTupel {
-    private AssemblyMember assemblyMember;
+    private String assemblyMember;
     private int count;
 
     /**
      * @param assemblyMember 
      * @param count 
      */
-    public AssemblyMemberCountTupel(AssemblyMember assemblyMember, int count) {
+    public AssemblyMemberCountTupel(String assemblyMember, int count) {
         this.assemblyMember = assemblyMember;
         this.count = count;
     }
@@ -16,7 +16,7 @@ public class AssemblyMemberCountTupel {
     /**
      * @return the assembly member
      */
-    public AssemblyMember getAssemblyMember() {
+    public String getAssemblyMemberString() {
         return assemblyMember;
     }
     

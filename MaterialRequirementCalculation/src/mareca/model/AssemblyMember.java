@@ -1,13 +1,13 @@
 package mareca.model;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import mareca.UnexpectedInputException;
 
 public abstract class AssemblyMember {
-    private static List<AssemblyMember> alreadyUsedAssemblyMembers = new LinkedList<AssemblyMember>();
+    private static List<AssemblyMember> alreadyUsedAssemblyMembers = new ArrayList<AssemblyMember>();
     private final boolean hasSubElements;
     private final String name;
 
@@ -17,7 +17,6 @@ public abstract class AssemblyMember {
      * @throws UnexpectedInputException
      */
     AssemblyMember(boolean hasSubElements, String name) {
-
         this.hasSubElements = hasSubElements;
         this.name = name;
         addAssemblyMemberToKnownList(this);
@@ -43,7 +42,7 @@ public abstract class AssemblyMember {
      * @param name           of the assembly element
      * @return the right assembly member object
      */
-    static AssemblyMember getAssemblyMember(boolean hasSubElements, String name) {
+    public static AssemblyMember getAssemblyMember(boolean hasSubElements, String name) {
         if (isAssemblyMemberInKnownList(name)) {
             AssemblyMember assemblyMember = getAssemblyMemberFromKnownList(name);
             return assemblyMember;
@@ -55,7 +54,6 @@ public abstract class AssemblyMember {
             } else {
                 newAssemblyMember = new Element(name);
             }
-            addAssemblyMemberToKnownList(newAssemblyMember);
             return newAssemblyMember;
         }
     }
@@ -151,9 +149,10 @@ public abstract class AssemblyMember {
     
     /**
      * @param assemblyMemberToRemove to remove
+     * @throws UnexpectedInputException if there is no element to remove with this name
      */
-    static void removeAssemblyMemberFromKnownList(AssemblyMember assemblyMemberToRemove) {
-        alreadyUsedAssemblyMembers.remove(assemblyMemberToRemove);
+    static void removeAssemblyMemberFromKnownList(String assemblyMemberToRemove) throws UnexpectedInputException {
+        alreadyUsedAssemblyMembers.remove(getAssemblyMember(assemblyMemberToRemove));
     }
     
 }
