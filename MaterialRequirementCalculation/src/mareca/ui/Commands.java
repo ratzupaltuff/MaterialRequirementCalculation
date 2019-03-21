@@ -39,7 +39,13 @@ public enum Commands {
         @Override
         public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
             String name = getCommandOptions(commandString);
-            knownAssemblies.replaceSubAssemblyWithElementRecursively(Assembly.getAssembly(name));
+            AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(name);
+            if (assemblyMember.hasSubElements()) {
+                Assembly assemblyToRemoveAssembly = (Assembly) assemblyMember;
+                knownAssemblies.replaceSubAssemblyWithElementRecursively(assemblyToRemoveAssembly);
+            } else {
+                throw new UnexpectedInputException(name + "is already an Assembly");
+            }
             Terminal.printLine("OK");
         }
     },
@@ -54,7 +60,7 @@ public enum Commands {
             String output = "";
             if (assemblyMember.hasSubElements()) {
                 Assembly assembly = (Assembly) assemblyMember;
-                output = assembly.getAssembliesString();
+                output = assembly.toString();
             } else {
                 throw new UnexpectedInputException(assemblyMember.getName() + "is not an Assembly");
             }
@@ -223,10 +229,10 @@ public enum Commands {
     private static void checkForDoubleNames(String[] assemblyMemberStrings) throws UnexpectedInputException {
         for (int currentStringNr = 0; currentStringNr < assemblyMemberStrings.length; currentStringNr++) {
             String currentName = assemblyMemberStrings[currentStringNr]
-                    .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[1];
+                    .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[0];
             for (int numberOfStringBefore = 0; numberOfStringBefore < currentStringNr; numberOfStringBefore++) {
                 String currentNameBefore = assemblyMemberStrings[numberOfStringBefore]
-                        .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[1];
+                        .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[0];
                 if (currentName.equals(currentNameBefore)) {
                     throw new UnexpectedInputException("You have entered a name at least twice");
                 }

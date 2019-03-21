@@ -111,7 +111,7 @@ public abstract class AssemblyMember {
         Iterator<AssemblyMember> i = alreadyUsedAssemblyMembers.iterator();
 
         while (i.hasNext()) {
-            AssemblyMember currentAssemblyMember = (AssemblyMember) i.next();
+            AssemblyMember currentAssemblyMember = i.next();
             if (currentAssemblyMember.getName().equals(name)) {
                 return currentAssemblyMember;
             }
@@ -128,7 +128,7 @@ public abstract class AssemblyMember {
         Iterator<AssemblyMember> i = alreadyUsedAssemblyMembers.iterator();
 
         while (i.hasNext()) {
-            AssemblyMember currentAssemblyMember = (AssemblyMember) i.next();
+            AssemblyMember currentAssemblyMember = i.next();
             if (currentAssemblyMember.getName().equals(name)) {
                 return true;
             }
@@ -153,6 +153,35 @@ public abstract class AssemblyMember {
      */
     static void removeAssemblyMemberFromKnownList(String assemblyMemberToRemove) throws UnexpectedInputException {
         alreadyUsedAssemblyMembers.remove(getAssemblyMember(assemblyMemberToRemove));
+    }
+    
+    /**
+     * @return the list of already used assemblyMembers
+     */
+    static List<AssemblyMember> getAlreadyUsedAssemblyMembers() {
+        return alreadyUsedAssemblyMembers;
+    }
+    
+    /**
+     * @param newList list with witch to override the old one
+     */
+    static void setAlreadyUsedAssemblyMembers(List<AssemblyMember> newList) {
+        alreadyUsedAssemblyMembers.clear();
+        for (AssemblyMember assemblyMember : newList) {
+            alreadyUsedAssemblyMembers.add(assemblyMember);
+        }
+        alreadyUsedAssemblyMembers = newList;
+    }
+    
+    /**
+     * @return a copy of the list
+     */
+    static List<AssemblyMember> copyAssemblyMembers() {
+        List<AssemblyMember> copiedList = new ArrayList<AssemblyMember>();
+        for (AssemblyMember assemblyMember : alreadyUsedAssemblyMembers) {
+            copiedList.add(assemblyMember);
+        }
+        return copiedList;
     }
     
 }
