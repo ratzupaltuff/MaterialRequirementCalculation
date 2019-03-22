@@ -81,7 +81,6 @@ public class Assembly extends AssemblyMember {
 
     @Override
     public String toString() {
-
         List<AssemblyMemberCountTupel> subMemberTupelList = new ArrayList<AssemblyMemberCountTupel>();
         subMemberTupelList = subMembersToTupelList();
 
@@ -258,6 +257,7 @@ public class Assembly extends AssemblyMember {
             subMembers.put(subMember.getName(), quantity);
             if (isLoopCreatedWhenAdding()) {
                 AssemblyMember.setAlreadyUsedAssemblyMembers(backupCopyAssemblyMembers);
+                subMembers.remove(subMember.getName());
                 throw new UnexpectedInputException("if you add " + subMember.getName() + " you are creating a loop");
             }
         } else {
@@ -412,14 +412,15 @@ public class Assembly extends AssemblyMember {
 
     private void removeSubAssemblyMemberCompletely(AssemblyMember assemblyMember) throws UnexpectedInputException {
         subMembers.remove(assemblyMember.getName());
-        AssemblyMember.removeAssemblyMemberFromKnownList(assemblyMember.getName());
+        
         if (subMembers.isEmpty()) { // if the parent assembly is empty after removal, convert to element
             AssemblyMember.removeAssemblyMemberFromKnownList(getName());
-            AssemblyMember.addAssemblyMemberToKnownList(new Element(getName()));
+            new Element(getName());
         }
-        if (assemblyMember.hasSubElements()) { // if the removed assembly had child elements
-            cleanUpAfterRemovalOfAssembly();
+        if (assemblyMember.hasSubElements() || subMembers.isEmpty()) { // if the removed assembly had child elements
+            
         }
+        cleanUpAfterRemovalOfAssembly();
     }
 
     /**
@@ -431,25 +432,33 @@ public class Assembly extends AssemblyMember {
      */
     public void removeSubAssemblyPartially(AssemblyMember assemblyMemberToRemove, int countToRemove)
             throws UnexpectedInputException {
-        int currentCountOfAssemblyMember = subMembers.get(assemblyMemberToRemove.getName());
-        if (currentCountOfAssemblyMember == countToRemove) {
-            removeSubAssemblyMemberCompletely(assemblyMemberToRemove);
-        } else if (currentCountOfAssemblyMember > countToRemove) {
-            subMembers.replace(assemblyMemberToRemove.getName(), currentCountOfAssemblyMember - countToRemove);
+        if (containsSubMember(assemblyMemberToRemove)) {
+            int currentCountOfAssemblyMember = subMembers.get(assemblyMemberToRemove.getName());
+            if (currentCountOfAssemblyMember == countToRemove) {
+                removeSubAssemblyMemberCompletely(assemblyMemberToRemove);
+            } else if (currentCountOfAssemblyMember > countToRemove) {
+                subMembers.replace(assemblyMemberToRemove.getName(), currentCountOfAssemblyMember - countToRemove);
+            } else {
+                throw new UnexpectedInputException("You cannot remove " + countToRemove + " from only "
+                        + currentCountOfAssemblyMember + " present subAssemblyMember(s)");
+            }
         } else {
-            throw new UnexpectedInputException("You cannot remove " + countToRemove + " from only "
-                    + currentCountOfAssemblyMember + " present subAssemblyMember(s)");
+            throw new UnexpectedInputException(assemblyMemberToRemove.getName() + " is not in " + getName());
         }
     }
 
     private void cleanUpAfterRemovalOfAssembly() throws UnexpectedInputException {
+        List<String> toRemoveElementStrings = new LinkedList<String>();
         for (AssemblyMember currentAssemblyMember : AssemblyMember.getAlreadyUsedAssemblyMembers()) {
             if (!currentAssemblyMember.hasSubElements()) {
                 // check if they are needed after removal of parent Assembly
                 if (!Assembly.isElementUsedInAnotherAssembly(currentAssemblyMember)) {
-                    AssemblyMember.removeAssemblyMemberFromKnownList(currentAssemblyMember.getName());
+                    toRemoveElementStrings.add(currentAssemblyMember.getName());
                 }
             }
+        }
+        for (String string : toRemoveElementStrings) {
+            AssemblyMember.removeAssemblyMemberFromKnownList(string);
         }
     }
 
@@ -467,6 +476,7 @@ public class Assembly extends AssemblyMember {
     }
 
     /**
+     *
      * @param assemblyToReplace assembly to replace with an element
      * @throws UnexpectedInputException if this assembly member doesnt exist
      */

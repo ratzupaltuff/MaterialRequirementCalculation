@@ -216,7 +216,8 @@ public enum Commands {
 
         checkForDoubleNames(assemblyMemberStringArray, nameOfParent);
 
-        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
+        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray 
+        = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
 
         for (int matchNumber = 0; matchNumber < assemblyMemberStringArray.length; matchNumber++) {
             assemblyMemberCountTupelArray[matchNumber] = getAssemblyMemberCountTupel(
