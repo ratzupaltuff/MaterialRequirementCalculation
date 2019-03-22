@@ -36,7 +36,7 @@ public enum UserInteractionStrings {
     /**
      * 
      */
-    REGEX_NUMBER("\\d"),
+    REGEX_NUMBER("(1000|[1-9]\\d{0,2})"),
 
     /**
      * 
@@ -54,12 +54,24 @@ public enum UserInteractionStrings {
      * 
      */
     REGEX_INITIALIZATION_CHARACTER("="),
+    
+    /**
+     * 
+     */
+    REGEX_ADDITION_CHARACTER("\\+"),
 
     /**
      * 
      */
     REGEX_MEMBER_DECLARATION(REGEX_NAME_OF_ASSEMBLY_MEMBER.toString() + REGEX_INITIALIZATION_CHARACTER.toString()
             + REGEX_MULTIPLE_PAIRS.toString()),
+    
+    /**
+     * 
+     */
+    REGEX_MEMBER_ADDITION(REGEX_NAME_OF_ASSEMBLY_MEMBER.toString() + REGEX_ADDITION_CHARACTER.toString()
+    + REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR.toString()),
+    
     /**
      * which character should separate the command and the parameters, default is
      * space

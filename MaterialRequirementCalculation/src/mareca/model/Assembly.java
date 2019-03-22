@@ -5,9 +5,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Set;
 
 import mareca.UnexpectedInputException;
@@ -59,13 +61,13 @@ public class Assembly extends AssemblyMember {
 
         for (AssemblyMemberCountTupel assemblyMemberCountTupel : subAssemblies) {
             assemblyToAdd.addSubMember(Element.getElement((assemblyMemberCountTupel.getAssemblyMemberString())),
-                    assemblyMemberCountTupel.getCount());
+                    assemblyMemberCountTupel.getIntCount());
         }
         addSubMember(assemblyToAdd, count);
-        
-        if (isLoopCreatedWhenAdding(assemblyToAdd)) {
+
+        if (isLoopCreatedWhenAdding()) {
             AssemblyMember.setAlreadyUsedAssemblyMembers(backupCopyAssemblyMembers);
-            throw new UnexpectedInputException("if you add " + name + "you are creating a loop");
+            throw new UnexpectedInputException("if you add " + name + " you are creating a loop");
         }
     }
 
@@ -83,19 +85,14 @@ public class Assembly extends AssemblyMember {
         List<AssemblyMemberCountTupel> subMemberTupelList = new ArrayList<AssemblyMemberCountTupel>();
         subMemberTupelList = subMembersToTupelList();
 
-        Collections.sort(subMemberTupelList, getComparator());
+        Collections.sort(subMemberTupelList, getNameComparatorComparator());
 
         StringBuilder output = new StringBuilder(30);
         for (AssemblyMemberCountTupel subMemberTupel : subMemberTupelList) {
             output.append(subMemberTupel.getAssemblyMemberString() + ":" + subMemberTupel.getCount() + ";");
         }
-        
-        String outputString;
-        if (output.toString().length() == 0) {
-            outputString = "COMPONENT";
-        } else {
-            outputString = output.toString().substring(0, output.toString().length() - 1); // delete last semicolon
-        }
+
+        String outputString = output.toString().substring(0, output.toString().length() - 1); // delete last semicolon
         return outputString;
     }
 
@@ -122,7 +119,7 @@ public class Assembly extends AssemblyMember {
      * @throws UnexpectedInputException if
      */
     List<AssemblyMemberCountTupel> subMembersToTupelListRecursively(List<AssemblyMemberCountTupel> subMemberTupelList,
-            int factorOfOccurence) throws UnexpectedInputException {
+            long factorOfOccurence) throws UnexpectedInputException {
 
         Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
         Iterator<Entry<String, Integer>> i = set.iterator();
@@ -156,7 +153,7 @@ public class Assembly extends AssemblyMember {
         return listToAddElement;
     }
 
-    private Comparator<AssemblyMemberCountTupel> getComparator() {
+    private Comparator<AssemblyMemberCountTupel> getValueBeforeNameComparatorComparator() {
         Comparator<AssemblyMemberCountTupel> assemblyComparator = new Comparator<AssemblyMemberCountTupel>() {
             /**
              * @param tupel1 tupel one to compare
@@ -167,10 +164,25 @@ public class Assembly extends AssemblyMember {
             public int compare(AssemblyMemberCountTupel tupel1, AssemblyMemberCountTupel tupel2) {
 
                 if (tupel1.getCount() != tupel2.getCount()) {
-                    return tupel2.getCount() - tupel1.getCount();
+                    return (int) (tupel2.getCount() - tupel1.getCount());
                 } else {
                     return tupel1.getAssemblyMemberString().compareTo(tupel2.getAssemblyMemberString());
                 }
+            }
+        };
+        return assemblyComparator;
+    }
+
+    private Comparator<AssemblyMemberCountTupel> getNameComparatorComparator() {
+        Comparator<AssemblyMemberCountTupel> assemblyComparator = new Comparator<AssemblyMemberCountTupel>() {
+            /**
+             * @param tupel1 tupel one to compare
+             * @param tupel2 tupel two to compare
+             * @return value <0 if tupel1 before tupel2, if they are the same 0, and >0 else
+             */
+            @Override
+            public int compare(AssemblyMemberCountTupel tupel1, AssemblyMemberCountTupel tupel2) {
+                return tupel1.getAssemblyMemberString().compareTo(tupel2.getAssemblyMemberString());
             }
         };
         return assemblyComparator;
@@ -182,7 +194,7 @@ public class Assembly extends AssemblyMember {
      */
     public String getAssembliesString() throws UnexpectedInputException {
 
-        Comparator<AssemblyMemberCountTupel> assemblyComparator = getComparator();
+        Comparator<AssemblyMemberCountTupel> assemblyComparator = getValueBeforeNameComparatorComparator();
 
         List<AssemblyMemberCountTupel> subMemberTupelList = new ArrayList<AssemblyMemberCountTupel>();
         subMembersToTupelListRecursively(subMemberTupelList, 1);
@@ -211,7 +223,7 @@ public class Assembly extends AssemblyMember {
      */
     public String getElementsString() throws UnexpectedInputException {
 
-        Comparator<AssemblyMemberCountTupel> assemblyComparator = getComparator();
+        Comparator<AssemblyMemberCountTupel> assemblyComparator = getValueBeforeNameComparatorComparator();
 
         List<AssemblyMemberCountTupel> subMemberTupelList = new ArrayList<AssemblyMemberCountTupel>();
         subMembersToTupelListRecursively(subMemberTupelList, 1);
@@ -242,34 +254,69 @@ public class Assembly extends AssemblyMember {
      */
     public void addSubMember(AssemblyMember subMember, int quantity) throws UnexpectedInputException {
         if (!containsSubMember(subMember)) {
+            List<AssemblyMember> backupCopyAssemblyMembers = AssemblyMember.copyAssemblyMembers();
             subMembers.put(subMember.getName(), quantity);
+            if (isLoopCreatedWhenAdding()) {
+                AssemblyMember.setAlreadyUsedAssemblyMembers(backupCopyAssemblyMembers);
+                throw new UnexpectedInputException("if you add " + subMember.getName() + " you are creating a loop");
+            }
+        } else {
+
         }
     }
 
     /**
      * searches for occurences of the subMember, does this recursively
      * 
-     * @param subMember to check
+     * @param queueToCheckAssemblies with submembers to check
+     * @param toSearchFor            AssemblyMember to search for
+     * @param alreadyPassedMembers passed members, to detect cycles
      * @return true if the assembly contains this member, else false
+     * 
+     *         Queue<Assembly> queueToCheckAssemblies = new LinkedList<Assembly>();
      * @throws UnexpectedInputException if
      */
-    boolean containsSubMemberRecursively(AssemblyMember subMember) throws UnexpectedInputException {
-        Set<Map.Entry<String, Integer>> set = subMembers.entrySet();
+    boolean containsSubMemberRecursively(Queue<Assembly> queueToCheckAssemblies, AssemblyMember toSearchFor,
+            List<Assembly> alreadyPassedMembers) throws UnexpectedInputException {
+
+        Assembly subMember = queueToCheckAssemblies.poll();
+        if (subMember == null) {
+            return false;
+        } else if (alreadyPassedMembers.contains(subMember)) {
+            throw new UnexpectedInputException("loop detected");
+        } else {
+            alreadyPassedMembers.add(subMember);
+        }
+        Set<Map.Entry<String, Integer>> set = subMember.subMembers.entrySet();
         Iterator<Entry<String, Integer>> i = set.iterator();
 
         while (i.hasNext()) {
             Map.Entry<String, Integer> subMemberEntry = i.next();
             AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
-            if (currentAssemblyMember.equals(subMember)) {
+            if (currentAssemblyMember.equals(toSearchFor)) {
                 return true;
             } else if (currentAssemblyMember.hasSubElements()) {
                 Assembly subAssembly = (Assembly) currentAssemblyMember;
-                if (subAssembly.containsSubMemberRecursively(subMember)) {
-                    return true;
-                }
+                queueToCheckAssemblies.add(subAssembly);
             }
         }
-        return false;
+        boolean 
+        alreadyPassedMembers.remove(subMember);
+        return containsSubMemberRecursively(queueToCheckAssemblies, toSearchFor, alreadyPassedMembers);
+    }
+
+    /**
+     * searches for occurences of the subMember, does this recursively
+     * 
+     * @param toSearchFor the AssemblyMember to search for in the current Assembly
+     * @return true if the assembly contains this member, else false
+     * @throws UnexpectedInputException if
+     */
+    boolean containsSubMemberRecursively(AssemblyMember toSearchFor) throws UnexpectedInputException {
+        Queue<Assembly> queueToCheckAssemblies = new LinkedList<Assembly>();
+        List<Assembly> alreadyPassedMember = new LinkedList<Assembly>();
+        queueToCheckAssemblies.add(this);
+        return containsSubMemberRecursively(queueToCheckAssemblies, toSearchFor, alreadyPassedMember);
     }
 
     /**
@@ -371,7 +418,7 @@ public class Assembly extends AssemblyMember {
      * @param assemblyMember to remove
      * @throws UnexpectedInputException if this assembly member is not present
      */
-    public void removeAssemblyMember(AssemblyMember assemblyMember) throws UnexpectedInputException {
+    public void removeSubAssemblyMemberRecursively(AssemblyMember assemblyMember) throws UnexpectedInputException {
         if (assemblyMember.hasSubElements()) {
             replaceSubAssemblyWithElementRecursively((Assembly) assemblyMember);
         } else {
@@ -394,7 +441,7 @@ public class Assembly extends AssemblyMember {
                 Assembly assembly = (Assembly) currentAssemblyMember;
                 if (assembly.equals(assemblyToReplace)) {
                     int count = subMemberEntry.getValue();
-                    removeAssemblyMember(assembly);
+                    subMembers.remove(assembly.getName());
                     addSubMember(assembly.toElement(), count);
                 } else {
                     if (assembly.containsSubMemberRecursively(assemblyToReplace)) {
@@ -424,7 +471,7 @@ public class Assembly extends AssemblyMember {
                 AssemblyMember currentAssemblyMember = getAssemblyMember(subMemberEntry.getKey());
                 if (currentAssemblyMember.equals(elementToReplace)) {
                     int count = subMemberEntry.getValue();
-                    removeAssemblyMember(elementToReplace);
+                    subMembers.remove(elementToReplace.getName());
                     addSubMember(assembly.toElement(), count);
                 } else if (currentAssemblyMember.hasSubElements()) {
                     Assembly subAssembly = (Assembly) currentAssemblyMember;
@@ -436,56 +483,19 @@ public class Assembly extends AssemblyMember {
         }
     }
 
-    private void detectLoop(String assemblyToAddString, AssemblyMemberCountTupel[] assemblyToAddChildTupel,
-            Assembly parentAssembly) throws UnexpectedInputException {
-        if (AssemblyMember.isAssemblyMemberInKnownList(assemblyToAddString)) {
-            AssemblyMember assemblyMemberToAddAssemblyMember = AssemblyMember.getAssemblyMember(assemblyToAddString);
-            if (assemblyMemberToAddAssemblyMember.hasSubElements()) {
-                Assembly assemblyToAdd = (Assembly) assemblyMemberToAddAssemblyMember;
-                if (assemblyToAdd.containsSubMemberRecursively(parentAssembly)) { // x-...-y-X!
-                    throw new UnexpectedInputException("if you add " + assemblyToAdd.getName()
-                            + "you will create a loop: " + assemblyToAdd.getName() + "-...-" + parentAssembly.getName()
-                            + "-" + assemblyToAdd.getName());
-                } else if (assemblyToAdd.containsSubMemberRecursively(parentAssembly)) { // ?-...-X!-...-?
-                    throw new UnexpectedInputException("if you add " + assemblyToAdd.getName()
-                            + "you will create a loop: " + assemblyToAdd.getName() + "-" + parentAssembly.getName()
-                            + "-...-" + assemblyToAdd.getName());
-                }
-                // X!-...-?-...-x
-                for (AssemblyMemberCountTupel assemblyMemberCountTupelToCheck : assemblyToAddChildTupel) {
-                    AssemblyMember assemblyMember = AssemblyMember
-                            .getAssemblyMember(assemblyMemberCountTupelToCheck.getAssemblyMemberString());
-                    if (assemblyMember.hasSubElements()) {
-                        Assembly assemblyToCheckAssembly = (Assembly) assemblyMember;
-                        if (assemblyToCheckAssembly.containsSubMember(assemblyToAdd)) {
-                            throw new UnexpectedInputException(
-                                    "if you add " + assemblyToAdd.getName() + "you will create a loop: "
-                                            + assemblyToAdd.getName() + "-...-" + assemblyToAdd.getName());
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
-    private boolean isLoopCreatedWhenAdding(AssemblyMember assemblyToCheck) throws UnexpectedInputException {
-        //AssemblyMember.addAssemblyMemberToKnownList(assemblyToCheck);
-        List<AssemblyMember> listOfAllMembers = AssemblyMember.getAlreadyUsedAssemblyMembers();
-        for (AssemblyMember assemblyMember : listOfAllMembers) {
+    private boolean isLoopCreatedWhenAdding() throws UnexpectedInputException {
+        // AssemblyMember.addAssemblyMemberToKnownList(assemblyToCheck);
+        Object[] listOfAllMembers = AssemblyMember.getAlreadyUsedAssemblyMembers().toArray();
+        for (int numberToCheck = listOfAllMembers.length - 1; numberToCheck > 0; numberToCheck--) {
+            AssemblyMember assemblyMember = (AssemblyMember) listOfAllMembers[numberToCheck];
             if (assemblyMember.hasSubElements()) {
                 Assembly assemblyToCheckContains = (Assembly) assemblyMember;
                 if (assemblyToCheckContains.containsSubMemberRecursively(assemblyToCheckContains)) {
-                    //AssemblyMember.removeAssemblyMemberFromKnownList(assemblyToCheck.getName());
-                    /*throw new UnexpectedInputException(
-                            "if you add " + assemblyToCheck.getName() + " you will create a loop"
-                                    + assemblyToCheckContains.getName() + "-...-" + assemblyToCheckContains.getName());
-                */
                     return true;
-                    }
+                }
             }
         }
-        //AssemblyMember.removeAssemblyMemberFromKnownList(assemblyToCheck.getName());
+        // AssemblyMember.removeAssemblyMemberFromKnownList(assemblyToCheck.getName());
         return false;
     }
 }

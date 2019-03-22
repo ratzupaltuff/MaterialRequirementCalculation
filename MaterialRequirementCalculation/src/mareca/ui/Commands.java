@@ -24,7 +24,8 @@ public enum Commands {
                     .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[0];
             AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = getAssemblyMemberArray(
                     getCommandOptions(commandString)
-                            .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[1]);
+                            .split(UserInteractionStrings.REGEX_INITIALIZATION_CHARACTER.toString())[1],
+                    nameOfAssemblyToAdd);
 
             knownAssemblies.createNewSubAssembly(nameOfAssemblyToAdd, assemblyMemberCountTupelArray, 1);
             Terminal.printLine("OK");
@@ -44,7 +45,7 @@ public enum Commands {
                 Assembly assemblyToRemoveAssembly = (Assembly) assemblyMember;
                 knownAssemblies.replaceSubAssemblyWithElementRecursively(assemblyToRemoveAssembly);
             } else {
-                throw new UnexpectedInputException(name + "is already an Assembly");
+                throw new UnexpectedInputException(name + " is already an Element");
             }
             Terminal.printLine("OK");
         }
@@ -57,14 +58,7 @@ public enum Commands {
         @Override
         public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
             AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(getCommandOptions(commandString));
-            String output = "";
-            if (assemblyMember.hasSubElements()) {
-                Assembly assembly = (Assembly) assemblyMember;
-                output = assembly.toString();
-            } else {
-                throw new UnexpectedInputException(assemblyMember.getName() + "is not an Assembly");
-            }
-            Terminal.printLine(output);
+            Terminal.printLine(assemblyMember.toString());
         }
     },
 
@@ -108,16 +102,17 @@ public enum Commands {
      *
      */
     ADD_PART("addPart" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
-            + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
+            + UserInteractionStrings.REGEX_MEMBER_ADDITION.toString()) {
         @Override
         public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
-            String[] commandContentStrings = getCommandOptions(commandString).split("\\+");
+            String[] commandContentStrings = getCommandOptions(commandString)
+                    .split(UserInteractionStrings.REGEX_ADDITION_CHARACTER.toString());
             AssemblyMemberCountTupel tupelToAdd = getAssemblyMemberCountTupel(commandContentStrings[1]);
             AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(false, commandContentStrings[0]);
             if (assemblyMember.hasSubElements()) {
                 Assembly assembly = (Assembly) assemblyMember;
                 assembly.addSubMember(AssemblyMember.getAssemblyMember(tupelToAdd.getAssemblyMemberString()),
-                        tupelToAdd.getCount());
+                        tupelToAdd.getIntCount());
                 Terminal.printLine("OK");
             } else {
                 throw new UnexpectedInputException(tupelToAdd.getAssemblyMemberString() + " is not an Assembly");
@@ -136,7 +131,8 @@ public enum Commands {
             AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(commandContentStrings[0]);
             if (assemblyMember.hasSubElements()) {
                 Assembly assembly = (Assembly) assemblyMember;
-                assembly.removeAssemblyMember(AssemblyMember.getAssemblyMember(tupelToAdd.getAssemblyMemberString()));
+                assembly.removeSubAssemblyMemberRecursively(
+                        AssemblyMember.getAssemblyMember(tupelToAdd.getAssemblyMemberString()));
                 Terminal.printLine("OK");
             } else {
                 throw new UnexpectedInputException(tupelToAdd.getAssemblyMemberString() + " is not an Assembly");
@@ -208,16 +204,15 @@ public enum Commands {
         return shouldQuit;
     }
 
-    private static AssemblyMemberCountTupel[] getAssemblyMemberArray(String initalizationString)
+    private static AssemblyMemberCountTupel[] getAssemblyMemberArray(String initalizationString, String nameOfParent)
             throws UnexpectedInputException {
 
         String[] assemblyMemberStringArray = initalizationString
                 .split(UserInteractionStrings.REGEX_COORDINATE_OUTER_SEPERATOR.toString());
 
-        checkForDoubleNames(assemblyMemberStringArray);
+        checkForDoubleNames(assemblyMemberStringArray, nameOfParent);
 
-        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray 
-        = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
+        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
 
         for (int matchNumber = 0; matchNumber < assemblyMemberStringArray.length; matchNumber++) {
             assemblyMemberCountTupelArray[matchNumber] = getAssemblyMemberCountTupel(
@@ -226,16 +221,20 @@ public enum Commands {
         return assemblyMemberCountTupelArray;
     }
 
-    private static void checkForDoubleNames(String[] assemblyMemberStrings) throws UnexpectedInputException {
+    private static void checkForDoubleNames(String[] assemblyMemberStrings, String nameOfParent)
+            throws UnexpectedInputException {
         for (int currentStringNr = 0; currentStringNr < assemblyMemberStrings.length; currentStringNr++) {
             String currentName = assemblyMemberStrings[currentStringNr]
-                    .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[0];
+                    .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[1];
             for (int numberOfStringBefore = 0; numberOfStringBefore < currentStringNr; numberOfStringBefore++) {
                 String currentNameBefore = assemblyMemberStrings[numberOfStringBefore]
-                        .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[0];
+                        .split(UserInteractionStrings.REGEX_COORDINATE_INNER_SEPERATOR.toString())[1];
                 if (currentName.equals(currentNameBefore)) {
                     throw new UnexpectedInputException("You have entered a name at least twice");
                 }
+            }
+            if (currentName.equals(nameOfParent)) {
+                throw new UnexpectedInputException("An Assembly cannot contain itself");
             }
         }
     }
