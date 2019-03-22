@@ -108,14 +108,17 @@ public enum Commands {
             String[] commandContentStrings = getCommandOptions(commandString)
                     .split(UserInteractionStrings.REGEX_ADDITION_CHARACTER.toString());
             AssemblyMemberCountTupel tupelToAdd = getAssemblyMemberCountTupel(commandContentStrings[1]);
+            if (tupelToAdd.getAssemblyMemberString().equals(commandContentStrings[0])) {
+                throw new UnexpectedInputException("you cannot add an an Assembly to itself");
+            }
             AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(false, commandContentStrings[0]);
             if (assemblyMember.hasSubElements()) {
                 Assembly assembly = (Assembly) assemblyMember;
-                assembly.addSubMember(AssemblyMember.getAssemblyMember(tupelToAdd.getAssemblyMemberString()),
+                assembly.addSubMember(AssemblyMember.getAssemblyMember(false, tupelToAdd.getAssemblyMemberString()),
                         tupelToAdd.getIntCount());
                 Terminal.printLine("OK");
             } else {
-                throw new UnexpectedInputException(tupelToAdd.getAssemblyMemberString() + " is not an Assembly");
+                throw new UnexpectedInputException(assemblyMember.getName() + " is not an Assembly");
             }
         }
     },
@@ -123,19 +126,20 @@ public enum Commands {
     *
     */
     REMOVE_PART("removePart" + UserInteractionStrings.REGEX_COMMAND_PARAMETER_SEPERATOR.toString()
-            + UserInteractionStrings.REGEX_NAME_OF_ASSEMBLY_MEMBER.toString()) {
+            + UserInteractionStrings.REGEX_MEMBER_SUBSTRACTION.toString()) {
         @Override
         public void execute(String commandString, Assembly knownAssemblies) throws UnexpectedInputException {
             String[] commandContentStrings = getCommandOptions(commandString).split("-");
-            AssemblyMemberCountTupel tupelToAdd = getAssemblyMemberCountTupel(commandContentStrings[1]);
+            AssemblyMemberCountTupel tupelToRemove = getAssemblyMemberCountTupel(commandContentStrings[1]);
             AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(commandContentStrings[0]);
             if (assemblyMember.hasSubElements()) {
                 Assembly assembly = (Assembly) assemblyMember;
-                assembly.removeSubAssemblyMemberRecursively(
-                        AssemblyMember.getAssemblyMember(tupelToAdd.getAssemblyMemberString()));
+                assembly.removeSubAssemblyPartially(
+                        AssemblyMember.getAssemblyMember(tupelToRemove.getAssemblyMemberString()),
+                        tupelToRemove.getIntCount());
                 Terminal.printLine("OK");
             } else {
-                throw new UnexpectedInputException(tupelToAdd.getAssemblyMemberString() + " is not an Assembly");
+                throw new UnexpectedInputException(tupelToRemove.getAssemblyMemberString() + " is not an Assembly");
             }
         }
     },

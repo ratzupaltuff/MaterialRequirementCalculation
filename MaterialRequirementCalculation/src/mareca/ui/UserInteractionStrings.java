@@ -59,6 +59,11 @@ public enum UserInteractionStrings {
      * 
      */
     REGEX_ADDITION_CHARACTER("\\+"),
+    
+    /**
+     * 
+     */
+    REGEX_SUBSTRACTION_CHARACTER("-"),
 
     /**
      * 
@@ -70,6 +75,13 @@ public enum UserInteractionStrings {
      * 
      */
     REGEX_MEMBER_ADDITION(REGEX_NAME_OF_ASSEMBLY_MEMBER.toString() + REGEX_ADDITION_CHARACTER.toString()
+    + REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR.toString()),
+    
+    
+    /**
+     * 
+     */
+    REGEX_MEMBER_SUBSTRACTION(REGEX_NAME_OF_ASSEMBLY_MEMBER.toString() + REGEX_SUBSTRACTION_CHARACTER.toString()
     + REGEX_ASSEMBLY_MEMBER_QUANTITY_PAIR.toString()),
     
     /**
