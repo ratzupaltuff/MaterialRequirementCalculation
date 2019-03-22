@@ -5,8 +5,8 @@ public class AssemblyMemberCountTupel {
     private long count;
 
     /**
-     * @param assemblyMember
-     * @param count
+     * @param assemblyMember assembly member to initialize
+     * @param count count of this assemblymember
      */
     public AssemblyMemberCountTupel(String assemblyMember, long count) {
         this.assemblyMember = assemblyMember;
@@ -36,7 +36,7 @@ public class AssemblyMemberCountTupel {
     }
 
     /**
-     * @param changeByValue
+     * @param changeByValue value to add to the count of the assemblyMember of this tupel
      */
     public void changeCount(long changeByValue) {
         count = count + changeByValue;

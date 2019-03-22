@@ -28,7 +28,7 @@ public enum Commands {
                     nameOfAssemblyToAdd);
 
             knownAssemblies.createNewSubAssembly(nameOfAssemblyToAdd, assemblyMemberCountTupelArray, 1);
-            Terminal.printLine("OK");
+            Terminal.printLine("OK"); // + AssemblyMember.print()
         }
     },
     /**
@@ -111,14 +111,16 @@ public enum Commands {
             if (tupelToAdd.getAssemblyMemberString().equals(commandContentStrings[0])) {
                 throw new UnexpectedInputException("you cannot add an an Assembly to itself");
             }
-            AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(false, commandContentStrings[0]);
+
+            AssemblyMember assemblyMember = AssemblyMember.getAssemblyMember(commandContentStrings[0]);
             if (assemblyMember.hasSubElements()) {
                 Assembly assembly = (Assembly) assemblyMember;
-                assembly.addSubMember(AssemblyMember.getAssemblyMember(false, tupelToAdd.getAssemblyMemberString()),
+                assembly.addSubMember(tupelToAdd.getAssemblyMemberString(),
                         tupelToAdd.getIntCount());
                 Terminal.printLine("OK");
             } else {
-                throw new UnexpectedInputException(assemblyMember.getName() + " is not an Assembly");
+                throw new UnexpectedInputException(
+                        assemblyMember.getName() + " is not an Assembly");
             }
         }
     },
@@ -216,8 +218,7 @@ public enum Commands {
 
         checkForDoubleNames(assemblyMemberStringArray, nameOfParent);
 
-        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray 
-        = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
+        AssemblyMemberCountTupel[] assemblyMemberCountTupelArray = new AssemblyMemberCountTupel[assemblyMemberStringArray.length];
 
         for (int matchNumber = 0; matchNumber < assemblyMemberStringArray.length; matchNumber++) {
             assemblyMemberCountTupelArray[matchNumber] = getAssemblyMemberCountTupel(

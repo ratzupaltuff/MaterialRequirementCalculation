@@ -93,6 +93,18 @@ public abstract class AssemblyMember {
     public String toString() {
         return name;
     }
+    
+    /**
+     * @return  string 
+     * 
+     */
+    public static String print() {
+        String outputString = "";
+        for (AssemblyMember assemblyMember : alreadyUsedAssemblyMembers) {
+            outputString += assemblyMember.getName() + "=" + assemblyMember.toString() + "; ";
+        }
+        return outputString;
+    }
 
     /**
      * @param assemblyMemberToAdd member to add to the internal list of known
@@ -146,22 +158,23 @@ public abstract class AssemblyMember {
         }
         return false;
     }
-    
+
     /**
      * @param assemblyMemberToRemove to remove
-     * @throws UnexpectedInputException if there is no element to remove with this name
+     * @throws UnexpectedInputException if there is no element to remove with this
+     *                                  name
      */
     static void removeAssemblyMemberFromKnownList(String assemblyMemberToRemove) throws UnexpectedInputException {
         alreadyUsedAssemblyMembers.remove(getAssemblyMember(assemblyMemberToRemove));
     }
-    
+
     /**
      * @return the list of already used assemblyMembers
      */
     static List<AssemblyMember> getAlreadyUsedAssemblyMembers() {
         return alreadyUsedAssemblyMembers;
     }
-    
+
     /**
      * @param newList list with witch to override the old one
      */
@@ -172,7 +185,7 @@ public abstract class AssemblyMember {
         }
         alreadyUsedAssemblyMembers = newList;
     }
-    
+
     /**
      * @return a copy of the list
      */
@@ -183,5 +196,5 @@ public abstract class AssemblyMember {
         }
         return copiedList;
     }
-    
+
 }

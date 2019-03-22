@@ -12,6 +12,7 @@ public class Element extends AssemblyMember {
     }
     
     /**
+     * TODO use
      * @param name name of the element to initialize or to copy
      * @return the element
      */
