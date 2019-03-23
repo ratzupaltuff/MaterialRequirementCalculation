@@ -1,5 +1,7 @@
 package mareca.model;
 
+import java.util.Comparator;
+
 public class AssemblyMemberCountTupel {
     private String assemblyMember;
     private long count;
@@ -40,6 +42,40 @@ public class AssemblyMemberCountTupel {
      */
     public void changeCount(long changeByValue) {
         count = count + changeByValue;
+    }
+    
+    /**
+     * @return a comparator which sorts assemblyMemberCountTupel by occurence and then by name
+     */
+    public static Comparator<AssemblyMemberCountTupel> getValueBeforeNameComparatorComparator() {
+        Comparator<AssemblyMemberCountTupel> assemblyComparator = new Comparator<AssemblyMemberCountTupel>() {
+            @Override
+            public int compare(AssemblyMemberCountTupel tupel1, AssemblyMemberCountTupel tupel2) {
+                if (tupel1.getCount() != tupel2.getCount()) {
+                    if (tupel2.getCount() > tupel1.getCount()) {
+                        return 1;
+                    } else {
+                        return -1;
+                    }
+                } else {
+                    return tupel1.getAssemblyMemberString().compareTo(tupel2.getAssemblyMemberString());
+                }
+            }
+        };
+        return assemblyComparator;
+    }
+    
+    /**
+     * @return a comparator which sorts assemblymemberCountTupels by name
+     */
+    public static Comparator<AssemblyMemberCountTupel> getNameComparatorComparator() {
+        Comparator<AssemblyMemberCountTupel> assemblyComparator = new Comparator<AssemblyMemberCountTupel>() {
+            @Override
+            public int compare(AssemblyMemberCountTupel tupel1, AssemblyMemberCountTupel tupel2) {
+                return tupel1.getAssemblyMemberString().compareTo(tupel2.getAssemblyMemberString());
+            }
+        };
+        return assemblyComparator;
     }
 
 }

@@ -1,7 +1,6 @@
 package mareca.ui;
 
 import mareca.UnexpectedInputException;
-import mareca.model.Assembly;
 import edu.kit.informatik.Terminal;
 
 /**
@@ -12,18 +11,17 @@ import edu.kit.informatik.Terminal;
 public class Main {
 
     /**
-     * main method that serves as the starting point to execute the dawn game
+     * main method that serves as the starting point to execute the material requirement calculation (mareca)
      * 
      * @param args arguments given to the main method (not used)
      */
     public static void main(String[] args) {
-        Assembly knownAssemblies = new Assembly();
         do {
             // current command entered
             String inputString = Terminal.readLine();
             try {
                 // try to execute the command, if its not possible, an error is thrown
-                Commands.executeRightCommand(inputString, knownAssemblies).execute(inputString, knownAssemblies);
+                Commands.executeRightCommand(inputString).execute(inputString);
             } catch (UnexpectedInputException e) {
                 // print the error
                 Terminal.printError(e.getMessage());

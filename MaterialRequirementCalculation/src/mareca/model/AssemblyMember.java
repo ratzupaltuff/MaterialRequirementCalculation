@@ -6,15 +6,40 @@ import java.util.List;
 
 import mareca.UnexpectedInputException;
 
+/**
+ * @author ratzupaltuff abstract class which declares how an assemblyMember
+ *         should behave and which methods it should have at least, additionally
+ *         it declares some default methods and cares about a static list, in
+ *         which all known members are saved
+ * 
+ *         1. i decided not to use an interface, because then i cannot declare
+ *         default methods and i don't need the advantage of implementing
+ *         multiple interfaces, and converting between the objects is a little
+ *         bit ugly but i thought it was better than interfaces at this point
+ * 
+ *         2. you could have created a separate object which holds a list of all
+ *         valid AssemblyMembers, but i think it is more intuitive to access all
+ *         known assemblyMembers in a static way like a database, it is kind of
+ *         a singleton pattern i used, to prevent creating the "same" object
+ *         multiple times
+ * 
+ *         3. by choosing this layout i forced myself to use statics everywhere,
+ *         if i had to model this again, i probably would choose a separate
+ *         class for holding the elements to prevent using static methods
+ *         everywhere
+ *
+ */
 public abstract class AssemblyMember {
     private static List<AssemblyMember> alreadyUsedAssemblyMembers = new ArrayList<AssemblyMember>();
     private final boolean hasSubElements;
     private final String name;
 
     /**
+     * private constructor to make it impossible from outside to create new elements
+     * if there is already one with this name
+     * 
      * @param hasSubElements whether it is element or assembly
      * @param name           the name of the assembly member
-     * @throws UnexpectedInputException
      */
     AssemblyMember(boolean hasSubElements, String name) {
         this.hasSubElements = hasSubElements;
@@ -23,54 +48,26 @@ public abstract class AssemblyMember {
     }
 
     /**
-     * special method for general assembly list constructions without a name
-     * 
-     * @param hasSubElements whether it is element or assembly
-     * @throws UnexpectedInputException
-     */
-    AssemblyMember(boolean hasSubElements) {
-        this.hasSubElements = hasSubElements;
-        this.name = null;
-    }
-
-    /**
      * use with caution, if you declare another class which extends assembly member
-     * directly
+     * directly make sure you can cast it to either assembly or element or edit the
+     * assembly class
      * 
-     * @param hasSubElements if it should be declared as a member with child
-     *                       elements or not
-     * @param name           of the assembly element
-     * @return the right assembly member object
-     */
-    public static AssemblyMember getAssemblyMember(boolean hasSubElements, String name) {
-        if (isAssemblyMemberInKnownList(name)) {
-            AssemblyMember assemblyMember = getAssemblyMemberFromKnownList(name);
-            return assemblyMember;
-        } else {
-            AssemblyMember newAssemblyMember;
-            if (hasSubElements) {
-                newAssemblyMember = new Assembly(name);
-
-            } else {
-                newAssemblyMember = new Element(name);
-            }
-            return newAssemblyMember;
-        }
-    }
-
-    /**
-     * @throws UnexpectedInputException if there is no such element
-     * @param hasSubElements
-     * @param name           of the element you want to get
-     * @return the right assembly member object
+     * @param name of the element you want to get
+     * @return the right assembly member object if it was created previously
+     * @throws UnexpectedInputException if there is no such element in the known
+     *                                  list
      */
     public static AssemblyMember getAssemblyMember(String name) throws UnexpectedInputException {
-        if (isAssemblyMemberInKnownList(name)) {
-            AssemblyMember assemblyMember = getAssemblyMemberFromKnownList(name);
-            return assemblyMember;
-        } else {
-            throw new UnexpectedInputException("there is no entry for an Assembly member with the name: " + name);
+        Iterator<AssemblyMember> i = alreadyUsedAssemblyMembers.iterator();
+
+        while (i.hasNext()) {
+            AssemblyMember currentAssemblyMember = i.next();
+            if (currentAssemblyMember.getName().equals(name)) {
+                return currentAssemblyMember;
+            }
         }
+        throw new UnexpectedInputException("there is no entry for an Assembly member with the name: " + name);
+
     }
 
     /**
@@ -88,22 +85,10 @@ public abstract class AssemblyMember {
     }
 
     /**
-     * @return string which identifies the contents of this assembly member
+     * @return string which identifies the (contents of this) assembly member
      */
     public String toString() {
         return name;
-    }
-    
-    /**
-     * @return  string 
-     * 
-     */
-    public static String print() {
-        String outputString = "";
-        for (AssemblyMember assemblyMember : alreadyUsedAssemblyMembers) {
-            outputString += assemblyMember.getName() + "=" + assemblyMember.toString() + "; ";
-        }
-        return outputString;
     }
 
     /**
@@ -112,24 +97,6 @@ public abstract class AssemblyMember {
      */
     static void addAssemblyMemberToKnownList(AssemblyMember assemblyMemberToAdd) {
         alreadyUsedAssemblyMembers.add(assemblyMemberToAdd);
-    }
-
-    /**
-     * @param name of the element to search for
-     * @return the element if it exists
-     * @throws UnexpectedInputException if there is no such element
-     */
-    static AssemblyMember getAssemblyMemberFromKnownList(String name)/* throws UnexpectedInputException */ {
-        Iterator<AssemblyMember> i = alreadyUsedAssemblyMembers.iterator();
-
-        while (i.hasNext()) {
-            AssemblyMember currentAssemblyMember = i.next();
-            if (currentAssemblyMember.getName().equals(name)) {
-                return currentAssemblyMember;
-            }
-        }
-        return null;
-        // throw new UnexpectedInputException("no such element found: " + name);
     }
 
     /**
